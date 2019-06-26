@@ -1,4 +1,5 @@
 import sys
+import pandas as pd
 import numpy as np
 
 from sklearn.ensemble import GradientBoostingClassifier
@@ -38,6 +39,9 @@ if __name__ == "__main__":
 
     # Load the competition dataset
     competition_dataset = DataSet("competition_test")
+    stances = pd.DataFrame(competition_dataset.stances)
+    stances['Body ID'].to_csv(r'baseline-results/body_id.csv', index=False, header=False)
+    stances['Headline'].to_csv(r'baseline-results/headline.csv', index=False, header=False)
     X_competition, y_competition = generate_features(competition_dataset.stances, competition_dataset, "competition")
 
     Xs = dict()
@@ -85,6 +89,9 @@ if __name__ == "__main__":
     #Run on Holdout set and report the final score on the holdout set
     predicted = [LABELS[int(a)] for a in best_fold.predict(X_holdout)]
     actual = [LABELS[int(a)] for a in y_holdout]
+
+    predicted_df = pd.DataFrame(predicted)
+    predicted_df.to_csv(r'baseline-results/stance.csv', index=False, header=False)
 
     print("Scores on the dev set")
     report_score(actual,predicted)
