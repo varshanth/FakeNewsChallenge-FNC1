@@ -90,9 +90,6 @@ if __name__ == "__main__":
     predicted = [LABELS[int(a)] for a in best_fold.predict(X_holdout)]
     actual = [LABELS[int(a)] for a in y_holdout]
 
-    predicted_df = pd.DataFrame(predicted)
-    predicted_df.to_csv(r'baseline-results/stance.csv', index=False, header=False)
-
     print("Scores on the dev set")
     report_score(actual,predicted)
     print("")
@@ -101,6 +98,9 @@ if __name__ == "__main__":
     #Run on competition dataset
     predicted = [LABELS[int(a)] for a in best_fold.predict(X_competition)]
     actual = [LABELS[int(a)] for a in y_competition]
+
+    predicted_df = pd.DataFrame(predicted)
+    predicted_df.to_csv(r'baseline-results/stance.csv', index=False, header=False)
 
     print("Scores on the test set")
     report_score(actual,predicted)
