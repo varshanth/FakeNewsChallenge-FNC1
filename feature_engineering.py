@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 
 _wnl = nltk.WordNetLemmatizer()
+master_words = ['NN', 'VBG', 'RB']
 
 
 def normalize_word(w):
@@ -15,6 +16,9 @@ def normalize_word(w):
 
 def get_tokenized_lemmas(s):
     return [normalize_word(t) for t in nltk.word_tokenize(s)]
+
+def get_tokenized_pos(s):
+    return [word for (word, token) in get_tokenized_lemmas(s) if token in master_words]
 
 
 def clean(s):
@@ -50,6 +54,18 @@ def word_overlap_features(headlines, bodies):
         X.append(features)
     return X
 
+
+def word_overlap_pos_features(headlines, bodies):
+    X = []
+    for i, (headline, body) in tqdm(enumerate(zip(headlines, bodies))):
+        clean_headline = clean(headline)
+        clean_body = clean(body)
+        clean_headline = get_tokenized_pos(clean_headline)
+        clean_body = get_tokenized_pos(clean_body)
+        features = [
+            len(set(clean_headline).intersection(clean_body)) / float(len(set(clean_headline).union(clean_body)))]
+        X.append(features)
+    return X
 
 def refuting_features(headlines, bodies):
     _refuting_words = [

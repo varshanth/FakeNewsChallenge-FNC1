@@ -24,8 +24,9 @@ def generate_features(stances,dataset,name):
     X_refuting = gen_or_load_feats(refuting_features, h, b, "features/refuting."+name+".npy")
     X_polarity = gen_or_load_feats(polarity_features, h, b, "features/polarity."+name+".npy")
     X_hand = gen_or_load_feats(hand_features, h, b, "features/hand."+name+".npy")
+    X_overlap_pos = gen_or_load_feats(word_overlap_pos_features, h, b, "features/overlap_pos."+name+".npy")
 
-    X = np.c_[X_hand, X_polarity, X_refuting, X_overlap]
+    X = np.c_[X_hand, X_polarity, X_refuting, X_overlap, X_overlap_pos]
     return X,y
 
 if __name__ == "__main__":
