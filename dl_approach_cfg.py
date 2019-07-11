@@ -2,9 +2,9 @@ from fnc_dataset_loader import LEN_HEADLINE
 
 TRAIN_CFG = {
          'BATCH_SIZE' : 32,
-         'N_EPOCHS' : 100,
+         'N_EPOCHS' : 15,
          'WEIGHTS_PATH' : 'model_chkpts/cond_cnn_classif',
-         'PATIENCE' : 5,
+         'PATIENCE' : 4,
          'LR' : 0.001,
          'LR_DECAY_STEPS' : 10,
          'LR_DECAY_GAMMA' : 0.1,

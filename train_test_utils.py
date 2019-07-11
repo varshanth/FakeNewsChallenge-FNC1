@@ -115,7 +115,8 @@ def test_model(model, test_iter, device):
     return test_loss, test_acc
 
 
-def report_fnc1_score(model, test_iter, label_field):
+def get_test_predictions(model, test_iter, label_field):
+    # Assuming test iteration will iterate only once
     model.eval()
     with torch.no_grad():
         for batch in test_iter:
@@ -123,11 +124,22 @@ def report_fnc1_score(model, test_iter, label_field):
             predictions = predictions.argmax(dim = 1).cpu().detach().numpy()
             actual = batch.label.cpu().detach().numpy()
             predictions = [label_field.vocab.itos[pred] for pred in predictions]
-            actual = [label_field.vocab.itos[act] for act in actual]
+            return predictions
+
+def report_fnc1_score(model, test_iter, label_field):
+    model.eval()
+    with torch.no_grad():
+        for batch in test_iter:
+            predictions, h_vec, b_vec = model(batch.text)
+            predictions = predictions.argmax(dim = 1).cpu().detach().numpy()
+            actual = batch.label.cpu().detach().numpy()
+            predictions = [label_field.vocab.itos[pred]
+                    if label_field.vocab.itos[pred] != 'related'
+                    else 'discuss' # THIS IS A RANDOM LABEL ASSIGNED FOR SCORING PURPOSE
+                    for pred in predictions]
+            actual = [label_field.vocab.itos[act]
+                    if label_field.vocab.itos[act] != 'related'
+                    else 'discuss' # THIS IS A RANDOM LABEL ASSIGNED FOR SCORING PURPOSE
+                    for act in actual]
             report_score(actual, predictions)
-
-
-
-
-
 

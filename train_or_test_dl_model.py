@@ -40,6 +40,7 @@ if __name__ == '__main__':
 
     print('Getting Model')
 
+    TRAIN_CFG['WEIGHTS_PATH'] += f'_{args.condition}'
     NET_CFG['num_classes'] = len(fields['label_field'].vocab)
     EMBED_CFG['V'] = len(fields['text_field'].vocab)
     model = ConditionedCNNClassifier(NET_CFG, EMBED_CFG)

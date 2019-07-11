@@ -76,11 +76,14 @@ class FNC_1(data.Dataset):
                 'c' : -1. if stance['Stance'] == condition else 1.}
                 for stance in stances]
 
-            if condition != 'unrelated' and train_flag:
-                print(condition)
+            if condition != 'unrelated':
                 print('Filtering out unrelated datapoints')
-                # Filter out the unrelated datapoints (unless it is the test set
+                # Filter out the unrelated datapoints
                 datapoints = list(filter(lambda dp: dp['y'] != 'unrelated', datapoints))
+            else:
+                for i in range(len(datapoints)):
+                    if datapoints[i]['y'] != 'unrelated':
+                        datapoints[i]['y'] = 'related'
 
             examples = [data.Example.fromlist(
                 [" ".join(datapoint['h']+datapoint['b']),
@@ -109,3 +112,40 @@ class FNC_1(data.Dataset):
 
         return (cls(True, text_field, label_field, condition_field, condition, examples=examples[:dev_index]),
                 cls(True, text_field, label_field, condition_field, condition, examples=examples[dev_index:]))
+
+
+class FNC_1_TEST_Unrelated_Is_Discuss(data.Dataset):
+    def __init__(self, text_field, label_field, condition_field, examples=None, **kwargs):
+        """Create the FNC dataset instance given fields.
+        Arguments:
+            text_field: The field that will be used for text data.
+            label_field: The field that will be used for label data.
+            condition_field: The field that will be used to indicate the conditioning label
+            Remaining keyword arguments: Passed to the constructor of
+                data.Dataset.
+        """
+        fields = [('text', text_field), ('label', label_field), ('condition', condition_field)]
+
+        if examples is None:
+            stances_path = TEST_PATH['stances']
+            bodies_path = TEST_PATH['bodies']
+
+            stances = read_csv_into_rows(stances_path)
+            article_rows = read_csv_into_rows(bodies_path)
+            articles = {article['Body ID']:article['articleBody'] for article in article_rows}
+
+            datapoints = [{
+                'h' : tokenize_and_limit(stance['Headline'], LEN_HEADLINE),
+                'b' : tokenize_and_limit(articles[stance['Body ID']], LEN_BODY),
+                'y' : 'discuss' if stance['Stance'] == 'unrelated' else stance['Stance'],
+                'c' : -1. if stance['Stance'] == 'disagree' else 1.}
+                for stance in stances]
+
+            examples = [data.Example.fromlist(
+                [" ".join(datapoint['h']+datapoint['b']),
+                datapoint['y'],
+                datapoint['c']],
+                fields) for datapoint in datapoints]
+
+        super(FNC_1_TEST_Unrelated_Is_Discuss, self).__init__(examples, fields, **kwargs)
+
