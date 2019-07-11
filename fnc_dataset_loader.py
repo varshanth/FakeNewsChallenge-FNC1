@@ -91,7 +91,7 @@ class FNC_1(data.Dataset):
         super(FNC_1, self).__init__(examples, fields, **kwargs)
 
     @classmethod
-    def splits(cls, train_flag, text_field, label_field, condition_field, condition, dev_ratio=.03, shuffle=True, **kwargs):
+    def splits(cls, train_flag, text_field, label_field, condition_field, condition, dev_ratio=.07, shuffle=True, **kwargs):
         """Create dataset objects for splits of the FNC_1 dataset.
         Arguments:
             text_field: The field that will be used for the sentence.
