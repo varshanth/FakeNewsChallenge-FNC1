@@ -1,6 +1,4 @@
 *.tag*
-splits/*.txt
-features/*.npy
 *.pyc
 .DS_Store
 .idea
