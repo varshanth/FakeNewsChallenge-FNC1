@@ -2,6 +2,7 @@ import sys
 import pandas as pd
 import numpy as np
 
+# from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
 from feature_engineering import refuting_features, polarity_features, hand_features, gen_or_load_feats
 from feature_engineering import word_overlap_features, word_overlap_pos_features, word_overlap_quotes_features
@@ -10,6 +11,7 @@ from utils.generate_test_splits import kfold_split, get_stances_for_folds
 from utils.score import report_score, LABELS, score_submission
 
 from utils.system import parse_params, check_version
+
 
 
 def generate_features(stances,dataset,name):
@@ -27,7 +29,7 @@ def generate_features(stances,dataset,name):
     X_overlap_pos = gen_or_load_feats(word_overlap_pos_features, h, b, "features/overlap_pos."+name+".npy")
     X_overlap_quotes = gen_or_load_feats(word_overlap_quotes_features, h, b, "features/overlap_quotes."+name+".npy")
 
-    X = np.c_[X_hand, X_polarity, X_refuting, X_overlap, X_overlap_pos]
+    X = np.c_[X_hand, X_polarity, X_refuting, X_overlap, X_overlap_pos, X_overlap_quotes]
     return X,y
 
 if __name__ == "__main__":
@@ -58,8 +60,6 @@ if __name__ == "__main__":
     best_score = 0
     best_fold = None
 
-    model_rf = RandomForestClassifier()
-    model_gdb = GradientBoostingClassifier()
 
     # classifiers = {model_rf :(0, None), model_gdb : (0, None)}
     # # Classifier for each fold
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         X_test = Xs[fold]
         y_test = ys[fold]
 
-        clf = AdaBoostClassifier(n_estimators=200, random_state=14128)
+        clf = GradientBoostingClassifier(n_estimators=200, random_state=14128, verbose=True)
         clf.fit(X_train, y_train)
 
         predicted = [LABELS[int(a)] for a in clf.predict(X_test)]
@@ -101,7 +101,10 @@ if __name__ == "__main__":
     print("")
     print("")
 
+
+    distillation_model_values = []
     #Run on competition dataset
+    # predicted = [LABELS[int(a)] if int(a) != 3 else aD for a,aD in zip(best_fold.predict(X_competition), distillation_model_values)]
     predicted = [LABELS[int(a)] for a in best_fold.predict(X_competition)]
     actual = [LABELS[int(a)] for a in y_competition]
 
