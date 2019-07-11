@@ -9,6 +9,7 @@ from train_test_utils import train_model, test_model, report_fnc1_score
 parser = argparse.ArgumentParser(description='CNN Based FNC Classifier')
 parser.add_argument('-test', action='store_true', default=False, help = 'Activate Testing')
 parser.add_argument('-weights_file', type=str, default=None, help = 'Path to Weights File')
+parser.add_argument('-condition', type=str, default='unrelated', help='Label to Condition Network')
 args = parser.parse_args()
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -19,8 +20,8 @@ if __name__ == '__main__':
     print('Preparing Train, Val & Test Sets')
 
     fields = get_FNC_1_fields()
-    train_data, val_data = FNC_1.splits(**fields)
-    test_data = FNC_1(train_flag = False, **fields)
+    train_data, val_data = FNC_1.splits(True, condition=args.condition, **fields)
+    test_data = FNC_1(False, condition=args.condition, **fields)
     # Build the vocabulary from all the data
     fields['text_field'].build_vocab(train_data, val_data, test_data,
                                      max_size = DATA_CFG['MAX_VOCAB_SIZE'],
@@ -34,6 +35,8 @@ if __name__ == '__main__':
             device = DEVICE,
             sort_key = lambda x: len(x.text),
             sort_within_batch=False)
+
+    print(f'Training: {len(train_data)} Validation: {len(val_data)} Test: {len(test_data)}')
 
     print('Getting Model')
 

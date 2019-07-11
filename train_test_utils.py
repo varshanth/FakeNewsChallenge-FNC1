@@ -31,9 +31,9 @@ def run_epoch(model, train_iter, criteria, optimizer):
         predictions, h_vec, b_vec = model(batch.text)
 
         classif_loss = criteria['classif'](predictions, batch.label)
-        related_field_alignment_loss = criteria['related_field_align'](
-                h_vec, b_vec, batch.related)
-        total_loss = classif_loss + related_field_alignment_loss
+        condition_field_alignment_loss = criteria['condition_field_align'](
+                h_vec, b_vec, batch.condition)
+        total_loss = classif_loss + condition_field_alignment_loss
         acc = categorical_accuracy(predictions, batch.label)
 
         total_loss.backward()
@@ -53,9 +53,9 @@ def evaluate(model, iterator, criteria):
         for batch in iterator:
             predictions, h_vec, b_vec = model(batch.text)
             classif_loss = criteria['classif'](predictions, batch.label)
-            related_field_alignment_loss = criteria['related_field_align'](
-                    h_vec, b_vec, batch.related)
-            total_loss = classif_loss + related_field_alignment_loss
+            condition_field_alignment_loss = criteria['condition_field_align'](
+                    h_vec, b_vec, batch.condition)
+            total_loss = classif_loss + condition_field_alignment_loss
             acc = categorical_accuracy(predictions, batch.label)
 
             epoch_loss += total_loss.item()
@@ -75,14 +75,14 @@ def train_model(model, train_iter, val_iter, device, train_cfg):
                                              step_size = train_cfg['LR_DECAY_STEPS'],
                                              gamma = train_cfg['LR_DECAY_GAMMA'])
     classif_criterion = nn.CrossEntropyLoss()
-    related_field_align_criterion = nn.CosineEmbeddingLoss(margin=0.0)
+    condition_field_align_criterion = nn.CosineEmbeddingLoss(margin=0.0)
 
     classif_criterion = classif_criterion.to(device)
-    related_field_align_criterion = related_field_align_criterion.to(device)
+    condition_field_align_criterion = condition_field_align_criterion.to(device)
 
     criteria = {
             'classif' : classif_criterion,
-            'related_field_align' : related_field_align_criterion,
+            'condition_field_align' : condition_field_align_criterion,
             }
 
     for epoch in range(train_cfg['N_EPOCHS']):
@@ -102,14 +102,14 @@ def train_model(model, train_iter, val_iter, device, train_cfg):
 
 def test_model(model, test_iter, device):
     classif_criterion = nn.CrossEntropyLoss()
-    related_field_align_criterion = nn.CosineEmbeddingLoss()
+    condition_field_align_criterion = nn.CosineEmbeddingLoss()
 
     classif_criterion = classif_criterion.to(device)
-    related_field_align_criterion = related_field_align_criterion.to(device)
+    condition_field_align_criterion = condition_field_align_criterion.to(device)
 
     criteria = {
             'classif' : classif_criterion,
-            'related_field_align' : related_field_align_criterion,
+            'condition_field_align' : condition_field_align_criterion,
             }
     test_loss, test_acc = evaluate(model, test_iter, criteria)
     return test_loss, test_acc
