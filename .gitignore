@@ -5,3 +5,4 @@ features/*.npy
 .DS_Store
 .idea
 __pycache__
+.vector_cache
