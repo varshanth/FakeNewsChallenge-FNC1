@@ -2,9 +2,9 @@ import sys
 import pandas as pd
 import numpy as np
 
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
 from feature_engineering import refuting_features, polarity_features, hand_features, gen_or_load_feats
-from feature_engineering import word_overlap_features
+from feature_engineering import word_overlap_features, word_overlap_pos_features, word_overlap_quotes_features
 from utils.dataset import DataSet
 from utils.generate_test_splits import kfold_split, get_stances_for_folds
 from utils.score import report_score, LABELS, score_submission
@@ -25,6 +25,7 @@ def generate_features(stances,dataset,name):
     X_polarity = gen_or_load_feats(polarity_features, h, b, "features/polarity."+name+".npy")
     X_hand = gen_or_load_feats(hand_features, h, b, "features/hand."+name+".npy")
     X_overlap_pos = gen_or_load_feats(word_overlap_pos_features, h, b, "features/overlap_pos."+name+".npy")
+    X_overlap_quotes = gen_or_load_feats(word_overlap_quotes_features, h, b, "features/overlap_quotes."+name+".npy")
 
     X = np.c_[X_hand, X_polarity, X_refuting, X_overlap, X_overlap_pos]
     return X,y
@@ -41,8 +42,8 @@ if __name__ == "__main__":
     # Load the competition dataset
     competition_dataset = DataSet("competition_test")
     stances = pd.DataFrame(competition_dataset.stances)
-    stances['Body ID'].to_csv(r'baseline-results/body_id.csv', index=False, header=False)
-    stances['Headline'].to_csv(r'baseline-results/headline.csv', index=False, header=False)
+    # stances['Body ID'].to_csv(r'baseline-results/body_id.csv', index=False, header=False)
+    # stances['Headline'].to_csv(r'baseline-results/headline.csv', index=False, header=False)
     X_competition, y_competition = generate_features(competition_dataset.stances, competition_dataset, "competition")
 
     Xs = dict()
@@ -57,8 +58,13 @@ if __name__ == "__main__":
     best_score = 0
     best_fold = None
 
+    model_rf = RandomForestClassifier()
+    model_gdb = GradientBoostingClassifier()
 
-    # Classifier for each fold
+    # classifiers = {model_rf :(0, None), model_gdb : (0, None)}
+    # # Classifier for each fold
+    # for classifier in classifiers:
+
     for fold in fold_stances:
         ids = list(range(len(folds)))
         del ids[fold]
@@ -69,7 +75,7 @@ if __name__ == "__main__":
         X_test = Xs[fold]
         y_test = ys[fold]
 
-        clf = GradientBoostingClassifier(n_estimators=200, random_state=14128, verbose=True)
+        clf = AdaBoostClassifier(n_estimators=200, random_state=14128)
         clf.fit(X_train, y_train)
 
         predicted = [LABELS[int(a)] for a in clf.predict(X_test)]
@@ -86,7 +92,6 @@ if __name__ == "__main__":
             best_fold = clf
 
 
-
     #Run on Holdout set and report the final score on the holdout set
     predicted = [LABELS[int(a)] for a in best_fold.predict(X_holdout)]
     actual = [LABELS[int(a)] for a in y_holdout]
@@ -100,8 +105,8 @@ if __name__ == "__main__":
     predicted = [LABELS[int(a)] for a in best_fold.predict(X_competition)]
     actual = [LABELS[int(a)] for a in y_competition]
 
-    predicted_df = pd.DataFrame(predicted)
-    predicted_df.to_csv(r'baseline-results/stance.csv', index=False, header=False)
+    # predicted_df = pd.DataFrame(predicted)
+    # predicted_df.to_csv(r'baseline-results/stance.csv', index=False, header=False)
 
     print("Scores on the test set")
     report_score(actual,predicted)
