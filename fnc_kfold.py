@@ -1,6 +1,8 @@
 import sys
 import pandas as pd
 import numpy as np
+import pickle
+import os
 
 # from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
@@ -11,7 +13,10 @@ from utils.generate_test_splits import kfold_split, get_stances_for_folds
 from utils.score import report_score, LABELS, score_submission
 
 from utils.system import parse_params, check_version
-
+from test_dl_model import get_predictions_from_FNC_1_Test
+import argparse
+import torch
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def generate_features(stances,dataset,name):
@@ -34,7 +39,9 @@ def generate_features(stances,dataset,name):
 
 if __name__ == "__main__":
     check_version()
-    parse_params()
+    params = parse_params()
+    print('Running Conditioned CNN on FNC1 Dataset')
+    dl_model_pred = get_predictions_from_FNC_1_Test(params.dl_weights_file, DEVICE)
 
     #Load the training dataset and generate folds
     d = DataSet()
@@ -60,38 +67,40 @@ if __name__ == "__main__":
     best_score = 0
     best_fold = None
 
+    if not os.path.exists(params.gb_weights_file):
+        print(f'{params.gb_weights_file} Not Found. Training From Scratch')
+        # classifiers = {model_rf :(0, None), model_gdb : (0, None)}
+        # # Classifier for each fold
+        # for classifier in classifiers:
 
-    # classifiers = {model_rf :(0, None), model_gdb : (0, None)}
-    # # Classifier for each fold
-    # for classifier in classifiers:
+        for fold in fold_stances:
+            ids = list(range(len(folds)))
+            del ids[fold]
 
-    for fold in fold_stances:
-        ids = list(range(len(folds)))
-        del ids[fold]
+            X_train = np.vstack(tuple([Xs[i] for i in ids]))
+            y_train = np.hstack(tuple([ys[i] for i in ids]))
 
-        X_train = np.vstack(tuple([Xs[i] for i in ids]))
-        y_train = np.hstack(tuple([ys[i] for i in ids]))
+            X_test = Xs[fold]
+            y_test = ys[fold]
 
-        X_test = Xs[fold]
-        y_test = ys[fold]
+            clf = GradientBoostingClassifier(n_estimators=200, random_state=14128, verbose=True)
+            clf.fit(X_train, y_train)
 
-        clf = GradientBoostingClassifier(n_estimators=200, random_state=14128, verbose=True)
-        clf.fit(X_train, y_train)
+            predicted = [LABELS[int(a)] for a in clf.predict(X_test)]
+            actual = [LABELS[int(a)] for a in y_test]
 
-        predicted = [LABELS[int(a)] for a in clf.predict(X_test)]
-        actual = [LABELS[int(a)] for a in y_test]
+            fold_score, _ = score_submission(actual, predicted)
+            max_fold_score, _ = score_submission(actual, actual)
 
-        fold_score, _ = score_submission(actual, predicted)
-        max_fold_score, _ = score_submission(actual, actual)
+            score = fold_score/max_fold_score
 
-        score = fold_score/max_fold_score
+            print("Score for fold "+ str(fold) + " was - " + str(score))
+            if score > best_score:
+                best_score = score
+                best_fold = clf
+        pickle.dump(best_fold, open(params.gb_weights_file, 'wb'))
 
-        print("Score for fold "+ str(fold) + " was - " + str(score))
-        if score > best_score:
-            best_score = score
-            best_fold = clf
-
-
+    best_fold = pickle.load(open(params.gb_weights_file, 'rb'))
     #Run on Holdout set and report the final score on the holdout set
     predicted = [LABELS[int(a)] for a in best_fold.predict(X_holdout)]
     actual = [LABELS[int(a)] for a in y_holdout]
@@ -102,14 +111,16 @@ if __name__ == "__main__":
     print("")
 
 
-    distillation_model_values = []
     #Run on competition dataset
-    # predicted = [LABELS[int(a)] if int(a) != 3 else aD for a,aD in zip(best_fold.predict(X_competition), distillation_model_values)]
     predicted = [LABELS[int(a)] for a in best_fold.predict(X_competition)]
+    predicted_combined = [a if a == "unrelated" else aD for a,aD in zip(predicted, dl_model_pred)]
     actual = [LABELS[int(a)] for a in y_competition]
+    report_score(actual, predicted_combined)
 
-    # predicted_df = pd.DataFrame(predicted)
-    # predicted_df.to_csv(r'baseline-results/stance.csv', index=False, header=False)
+    predicted_df = pd.DataFrame(
+            {'gb_pred': predicted,
+             'dl_pred': dl_model_pred,
+             'actual' : actual})
+    predicted_df.to_csv(r'comparison.csv', index=False, header=True)
 
     print("Scores on the test set")
-    report_score(actual,predicted)
