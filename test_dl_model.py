@@ -1,10 +1,10 @@
 import torch
 import torchtext.data as data
-from fnc_dataset_loader import FNC_1, FNC_1_Train_Untouched, FNC_1_TEST_Unrelated_Is_Discuss, get_FNC_1_fields
+from utils.fnc_dataset_loader import FNC_1, FNC_1_Train_Untouched, FNC_1_TEST_Unrelated_Is_Discuss, get_FNC_1_fields
 import argparse
 from dl_approach_cfg import TRAIN_CFG, DATA_CFG, NET_CFG, EMBED_CFG
-from custom_cnn_model import ConditionedCNNClassifier
-from train_test_utils import train_model, test_model, report_fnc1_score, get_test_predictions
+from models.custom_cnn_model import ConditionedCNNClassifier
+from utils.train_test_utils import train_model, test_model, report_fnc1_score, get_test_predictions
 
 
 def test_fnc1_model(weights_file, condition, device):

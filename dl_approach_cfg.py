@@ -1,4 +1,15 @@
-from fnc_dataset_loader import LEN_HEADLINE
+TRAIN_PATH = {
+        'stances': 'fnc-1/train_stances.csv',
+        'bodies' : 'fnc-1/train_bodies.csv'
+        }
+
+TEST_PATH = {
+        'stances' : 'fnc-1/competition_test_stances.csv',
+        'bodies'  : 'fnc-1/competition_test_bodies.csv'
+        }
+
+LEN_HEADLINE = 15
+LEN_BODY = 60
 
 TRAIN_CFG = {
          'BATCH_SIZE' : 32,
@@ -31,4 +42,5 @@ EMBED_CFG = {
         'B_V' : None, # To fill dynamically
         'D' : DATA_CFG['VECTOR_SIZE']
         }
+
 
