@@ -13,7 +13,7 @@ from utils.generate_test_splits import kfold_split, get_stances_for_folds
 from utils.score import report_score, LABELS, LABELS_RELATED, score_submission, score_cal
 
 from utils.system import parse_params, check_version
-# from test_dl_model import get_predictions_from_FNC_1_Test
+from test_dl_model import get_predictions_from_FNC_1_Test
 import argparse
 import torch
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     check_version()
     params = parse_params()
     print('Running Conditioned CNN on FNC1 Dataset')
-    # dl_model_pred = get_predictions_from_FNC_1_Test(params.dl_weights_file, DEVICE)
+    dl_model_pred = get_predictions_from_FNC_1_Test(params.dl_weights_file, DEVICE)
 
     #Load the training dataset and generate folds
     d = DataSet()
@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
     #Run on competition dataset
     predicted = [LABELS_RELATED[int(a)] for a in best_fold.predict(X_competition)]
-    # predicted_combined = [a if a == "unrelated" else aD for a,aD in zip(predicted, dl_model_pred)]
+    predicted_combined = [a if a == "unrelated" else aD for a,aD in zip(predicted, dl_model_pred)]
     actual = [LABELS[int(a)] for a in y_competition]
     report_score(actual, predicted_combined)
     '''
