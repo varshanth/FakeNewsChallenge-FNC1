@@ -49,9 +49,10 @@ def get_predictions_from_FNC_1_Test(weights_file, device):
 
     fields = get_FNC_1_fields()
     train_data, val_data = FNC_1.splits(True, condition='disagree', **fields)
+    test_dummy_data = FNC_1(False, condition='disagree', **fields)
     test_data = FNC_1_TEST_Unrelated_Is_Discuss(**fields)
     # Build the vocabulary from all the data
-    fields['text_field'].build_vocab(train_data, val_data, test_data,
+    fields['text_field'].build_vocab(train_data, val_data, test_dummy_data,
                                      max_size = DATA_CFG['MAX_VOCAB_SIZE'])
 
     fields['label_field'].build_vocab(train_data, val_data)
@@ -70,7 +71,7 @@ def get_predictions_from_FNC_1_Test(weights_file, device):
     EMBED_CFG['V'] = len(fields['text_field'].vocab)
     model = ConditionedCNNClassifier(NET_CFG, EMBED_CFG)
     print('Testing Model Selected')
-    model.load_state_dict(torch.load(args.weights_file))
+    model.load_state_dict(torch.load(weights_file))
     model.to(device)
     return get_test_predictions(model, test_iter, fields['label_field'])
 
