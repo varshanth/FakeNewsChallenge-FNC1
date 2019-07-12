@@ -11,7 +11,7 @@ TRAIN_CFG = {
          }
 
 DATA_CFG = {
-        'MAX_VOCAB_SIZE' : 25000,
+        'MAX_VOCAB_SIZE' : 40000,
         'VECTORS': 'glove.6B.100d',
         'VECTOR_SIZE' : 100,
         }
@@ -27,7 +27,8 @@ NET_CFG = {
         }
 
 EMBED_CFG = {
-        'V' : None, # To fill dynamically
+        'H_V' : None, # To fill dynamically
+        'B_V' : None, # To fill dynamically
         'D' : DATA_CFG['VECTOR_SIZE']
         }
 

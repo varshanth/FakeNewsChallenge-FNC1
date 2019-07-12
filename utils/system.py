@@ -6,7 +6,8 @@ import argparse
 def parse_params():
     parser = argparse.ArgumentParser(description='FakeNewsChallenge fnc-1-baseline')
     parser.add_argument('-c', '--clean-cache', action='store_true', default=False, help="clean cache files")
-    parser.add_argument('-weights_file', type=str, required = True, default=None, help = 'Path to Weights File')
+    parser.add_argument('-dl_weights_file', type=str, required = True, default=None, help = 'Path to DL Model Weights File')
+    parser.add_argument('-gb_weights_file', type=str, required = True, default=None, help = 'Path to GB Weights File')
     params = parser.parse_args()
 
     if not params.clean_cache:

@@ -7,7 +7,13 @@ class ConditionedCNNClassifier(nn.Module):
         super().__init__()
         self.net_cfg = net_cfg
         self.embed_cfg = embed_cfg
-        self.embedding = nn.Embedding(self.embed_cfg['V'], self.embed_cfg['D'])
+        print('----------- Model Config---------------')
+        print(f'Headline Embedding Size: {self.embed_cfg["H_V"]}')
+        print(f'Body Embedding Size: {self.embed_cfg["B_V"]}')
+        print(f'Number of Classes: {self.net_cfg["num_classes"]}')
+        print('---------------------------------------')
+        self.h_embedding = nn.Embedding(self.embed_cfg['H_V'], self.embed_cfg['D'])
+        self.b_embedding = nn.Embedding(self.embed_cfg['B_V'], self.embed_cfg['D'])
         self.convs_headline = nn.ModuleList(
                 [self.n_gram_conv(n, self.net_cfg['h_num_filt'])
                     for n in self.net_cfg['h_n_list']])
@@ -34,11 +40,11 @@ class ConditionedCNNClassifier(nn.Module):
                 kernel_size = (n, self.embed_cfg['D'])),
             nn.ReLU())
 
-    def forward(self, h_b):
-        # h_b = (Batch, Sentence Words)
-        h_b = self.embedding(h_b) # (Batch, Word, Vector)
-        h = h_b[:, :self.net_cfg['num_h_tokens']]
-        b = h_b[:, self.net_cfg['num_h_tokens']:]
+    def forward(self, h, b):
+        # h = (Batch, Sentence Words)
+        # b = (Batch, Sentence Words)
+        h = self.h_embedding(h) # (Batch, Word, Vector)
+        b = self.b_embedding(b) # (Batch, Word, Vector)
         h = h.unsqueeze(1) # (Batch, 1, Word, Vector)
         b = b.unsqueeze(1) # (Batch, 1, Word, Vector)
 
