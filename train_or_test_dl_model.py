@@ -1,10 +1,10 @@
 import torch
 import torchtext.data as data
-from fnc_dataset_loader import FNC_1, FNC_1_Train_Untouched, get_FNC_1_fields
+from utils.fnc_dataset_loader import FNC_1, FNC_1_Train_Untouched, get_FNC_1_fields
 import argparse
 from dl_approach_cfg import TRAIN_CFG, DATA_CFG, NET_CFG, EMBED_CFG
-from custom_cnn_model import ConditionedCNNClassifier
-from train_test_utils import train_model, test_model, report_fnc1_score
+from models.custom_cnn_model import ConditionedCNNClassifier
+from utils.train_test_utils import train_model, test_model, report_fnc1_score
 
 parser = argparse.ArgumentParser(description='CNN Based FNC Classifier')
 parser.add_argument('-test', action='store_true', default=False, help = 'Activate Testing')
@@ -34,6 +34,7 @@ if __name__ == '__main__':
                                      max_size = DATA_CFG['MAX_VOCAB_SIZE'],
                                      vectors = DATA_CFG['VECTORS'],
                                      unk_init = torch.Tensor.normal_)
+    # Build the labels from the conditioned data
     fields['label_field'].build_vocab(train_data, val_data)
     train_iter, val_iter, test_iter = data.BucketIterator.splits(
             (train_data, val_data, test_data),

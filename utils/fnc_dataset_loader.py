@@ -4,19 +4,10 @@ import random
 import torch
 from torchtext import data
 from csv import DictReader
-
-LEN_HEADLINE = 15
-LEN_BODY = 60
-
-TRAIN_PATH = {
-        'stances': 'fnc-1/train_stances.csv',
-        'bodies' : 'fnc-1/train_bodies.csv'
-        }
-
-TEST_PATH = {
-        'stances' : 'fnc-1/competition_test_stances.csv',
-        'bodies'  : 'fnc-1/competition_test_bodies.csv'
-        }
+import sys
+# The following will tell python to look for packages in the above folder as well
+sys.path.append('..')
+from dl_approach_cfg import TRAIN_PATH, TEST_PATH, LEN_HEADLINE, LEN_BODY
 
 # Function to read the csv line by line and each line will be treated
 # as a dictionary element. The csv file must have the headers to be used as

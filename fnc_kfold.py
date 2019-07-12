@@ -116,11 +116,12 @@ if __name__ == "__main__":
     predicted_combined = [a if a == "unrelated" else aD for a,aD in zip(predicted, dl_model_pred)]
     actual = [LABELS[int(a)] for a in y_competition]
     report_score(actual, predicted_combined)
-
+    '''
     predicted_df = pd.DataFrame(
             {'gb_pred': predicted,
              'dl_pred': dl_model_pred,
              'actual' : actual})
     predicted_df.to_csv(r'comparison.csv', index=False, header=True)
+    '''
 
     print("Scores on the test set")

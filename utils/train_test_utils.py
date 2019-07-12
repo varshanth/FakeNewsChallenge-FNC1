@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import time
-from early_stopping import EarlyStoppingWithSaveWeights
-from utils.score import report_score
+from .early_stopping import EarlyStoppingWithSaveWeights
+from .score import report_score
 
 
 def epoch_time(start_time, end_time):
