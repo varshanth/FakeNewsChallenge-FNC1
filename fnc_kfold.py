@@ -10,7 +10,7 @@ from feature_engineering import refuting_features, polarity_features, hand_featu
 from feature_engineering import word_overlap_features, word_overlap_pos_features, word_overlap_quotes_features
 from utils.dataset import DataSet
 from utils.generate_test_splits import kfold_split, get_stances_for_folds
-from utils.score import report_score, LABELS, score_submission
+from utils.score import report_score, LABELS, LABELS_RELATED, score_submission, score_cal
 
 from utils.system import parse_params, check_version
 from test_dl_model import get_predictions_from_FNC_1_Test
@@ -23,7 +23,8 @@ def generate_features(stances,dataset,name):
     h, b, y = [],[],[]
 
     for stance in stances:
-        y.append(LABELS.index(stance['Stance']))
+        if name != 'competition': y.append(LABELS_RELATED.index(stance['Stance']))
+        else : y.append(LABELS.index(stance['Stance']))
         h.append(stance['Headline'])
         b.append(dataset.articles[stance['Body ID']])
 
@@ -86,11 +87,11 @@ if __name__ == "__main__":
             clf = GradientBoostingClassifier(n_estimators=200, random_state=14128, verbose=True)
             clf.fit(X_train, y_train)
 
-            predicted = [LABELS[int(a)] for a in clf.predict(X_test)]
-            actual = [LABELS[int(a)] for a in y_test]
+            predicted = [LABELS_RELATED[int(a)] for a in clf.predict(X_test)]
+            actual = [LABELS_RELATED[int(a)] for a in y_test]
 
-            fold_score, _ = score_submission(actual, predicted)
-            max_fold_score, _ = score_submission(actual, actual)
+            fold_score = score_cal(actual, predicted)
+            max_fold_score = score_cal(actual, actual)
 
             score = fold_score/max_fold_score
 
@@ -102,25 +103,25 @@ if __name__ == "__main__":
 
     best_fold = pickle.load(open(params.gb_weights_file, 'rb'))
     #Run on Holdout set and report the final score on the holdout set
-    predicted = [LABELS[int(a)] for a in best_fold.predict(X_holdout)]
-    actual = [LABELS[int(a)] for a in y_holdout]
+    predicted = [LABELS_RELATED[int(a)] for a in best_fold.predict(X_holdout)]
+    actual = [LABELS_RELATED[int(a)] for a in y_holdout]
 
     print("Scores on the dev set")
-    report_score(actual,predicted)
+    # report_score(actual,predicted)
     print("")
     print("")
 
 
     #Run on competition dataset
-    predicted = [LABELS[int(a)] for a in best_fold.predict(X_competition)]
+    predicted = [LABELS_RELATED[int(a)] for a in best_fold.predict(X_competition)]
     predicted_combined = [a if a == "unrelated" else aD for a,aD in zip(predicted, dl_model_pred)]
     actual = [LABELS[int(a)] for a in y_competition]
     report_score(actual, predicted_combined)
-
+    '''
     predicted_df = pd.DataFrame(
             {'gb_pred': predicted,
              'dl_pred': dl_model_pred,
              'actual' : actual})
     predicted_df.to_csv(r'comparison.csv', index=False, header=True)
-
+    '''
     print("Scores on the test set")
