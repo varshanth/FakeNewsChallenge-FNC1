@@ -3,10 +3,18 @@ import re
 import nltk
 import numpy as np
 from sklearn import feature_extraction
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from collections import Counter
 from tqdm import tqdm
 
 
 _wnl = nltk.WordNetLemmatizer()
+# master_words = [ 'CD','JJ', 'JJR', 'JJS',
+#              'NN', 'NNS', 'NNP', 'NNPS',
+#              'RB', 'RBR', 'RBS', 'VB',
+#              'VBG','VBD', 'VBP', 'VBZ']
+
 master_words = ['NN', 'VBG', 'RB']
 
 
@@ -80,6 +88,37 @@ def word_overlap_quotes_features(headlines, bodies):
         features = [
             len(set(clean_headline).intersection(clean_body)) / float(len(set(clean_headline).union(clean_body)))]
         X.append(features)
+    return X
+
+def word_tfidf_features(headlines, bodies):
+
+    total_vocab = [get_tokenized_pos(clean(line)) for line in tqdm(headlines+bodies)]
+    print ("\n\n total vocab size - \n")
+    print(len(total_vocab))
+
+    total_vocab_flatten = [word for subword in total_vocab for word in subword]
+    word_counter = Counter(total_vocab_flatten)
+    most_occur = word_counter.most_common(5000)
+
+    vocab = [wd for wd,count in most_occur]
+    print ("\n\n extracted vocab size - \n")
+    print(len(vocab))
+
+    tfidf_vectorizer = TfidfVectorizer(use_idf=True, vocabulary=vocab, analyzer='word', tokenizer=get_tokenized_lemmas)
+
+    headlines_tfidf = tfidf_vectorizer.fit_transform(headlines)
+    headlines_matrix = headlines_tfidf.toarray()
+    print ("\n\n headline matrix size - \n")
+    print(headlines_matrix.shape)
+
+    bodies_tfidf = tfidf_vectorizer.fit_transform(bodies)
+    bodies_matrix = bodies_tfidf.toarray()
+    print ("\n\n body matrix size - \n")
+    print(bodies_matrix.shape)
+
+    similarity_df = cosine_similarity(headlines_matrix, bodies_matrix)
+    X = np.diagonal(similarity_df)
+
     return X
 
 def refuting_features(headlines, bodies):
