@@ -6,7 +6,7 @@ import os
 
 # from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
-from feature_engineering import refuting_features, polarity_features, hand_features, gen_or_load_feats
+from feature_engineering import refuting_features, polarity_features, hand_features, gen_or_load_feats, word_tfidf_features
 from feature_engineering import word_overlap_features, word_overlap_pos_features, word_overlap_quotes_features
 from utils.dataset import DataSet
 from utils.generate_test_splits import kfold_split, get_stances_for_folds
@@ -25,6 +25,7 @@ def generate_features(stances,dataset,name):
     for stance in stances:
         if name != 'competition': y.append(LABELS_RELATED.index(stance['Stance']))
         else : y.append(LABELS.index(stance['Stance']))
+        # y.append(LABELS.index(stance['Stance']))
         h.append(stance['Headline'])
         b.append(dataset.articles[stance['Body ID']])
 
@@ -34,8 +35,9 @@ def generate_features(stances,dataset,name):
     X_hand = gen_or_load_feats(hand_features, h, b, "features/hand."+name+".npy")
     X_overlap_pos = gen_or_load_feats(word_overlap_pos_features, h, b, "features/overlap_pos."+name+".npy")
     X_overlap_quotes = gen_or_load_feats(word_overlap_quotes_features, h, b, "features/overlap_quotes."+name+".npy")
+    X_tfidf = gen_or_load_feats(word_tfidf_features, h, b, "features/tfidf_fea."+name+".npy")
 
-    X = np.c_[X_hand, X_polarity, X_refuting, X_overlap, X_overlap_pos, X_overlap_quotes]
+    X = np.c_[X_hand, X_polarity, X_refuting, X_overlap, X_overlap_pos, X_overlap_quotes, X_tfidf]
     return X,y
 
 if __name__ == "__main__":
@@ -70,9 +72,7 @@ if __name__ == "__main__":
 
     if not os.path.exists(params.gb_weights_file):
         print(f'{params.gb_weights_file} Not Found. Training From Scratch')
-        # classifiers = {model_rf :(0, None), model_gdb : (0, None)}
         # # Classifier for each fold
-        # for classifier in classifiers:
 
         for fold in fold_stances:
             ids = list(range(len(folds)))
@@ -89,9 +89,14 @@ if __name__ == "__main__":
 
             predicted = [LABELS_RELATED[int(a)] for a in clf.predict(X_test)]
             actual = [LABELS_RELATED[int(a)] for a in y_test]
+            # predicted = [LABELS[int(a)] for a in clf.predict(X_test)]
+            # actual = [LABELS[int(a)] for a in y_test]
 
             fold_score = score_cal(actual, predicted)
             max_fold_score = score_cal(actual, actual)
+
+            # fold_score, _ = score_submission(actual, predicted)
+            # max_fold_score, _ = score_submission(actual, actual)
 
             score = fold_score/max_fold_score
 
@@ -105,6 +110,8 @@ if __name__ == "__main__":
     #Run on Holdout set and report the final score on the holdout set
     predicted = [LABELS_RELATED[int(a)] for a in best_fold.predict(X_holdout)]
     actual = [LABELS_RELATED[int(a)] for a in y_holdout]
+    # predicted = [LABELS[int(a)] for a in best_fold.predict(X_holdout)]
+    # actual = [LABELS[int(a)] for a in y_holdout]
 
     print("Scores on the dev set")
     # report_score(actual,predicted)
@@ -114,6 +121,7 @@ if __name__ == "__main__":
 
     #Run on competition dataset
     predicted = [LABELS_RELATED[int(a)] for a in best_fold.predict(X_competition)]
+    # predicted = [LABELS[int(a)] for a in best_fold.predict(X_competition)]
     predicted_combined = [a if a == "unrelated" else aD for a,aD in zip(predicted, dl_model_pred)]
     actual = [LABELS[int(a)] for a in y_competition]
     report_score(actual, predicted_combined)
@@ -124,4 +132,5 @@ if __name__ == "__main__":
              'actual' : actual})
     predicted_df.to_csv(r'comparison.csv', index=False, header=True)
     '''
+    
     print("Scores on the test set")
