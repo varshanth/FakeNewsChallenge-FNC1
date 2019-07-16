@@ -2,14 +2,15 @@ import torch
 import torchtext.data as data
 from utils.fnc_dataset_loader import FNC_1, FNC_1_Train_Untouched, get_FNC_1_fields
 import argparse
-from dl_approach_cfg import TRAIN_CFG, DATA_CFG, NET_CFG, EMBED_CFG
-from models.custom_cnn_model import ConditionedCNNClassifier
+from dl_approach_cfg import *
+from models.custom_cnn_model import ConditionedCNNClassifier, ConditionedSharedCNNClassifier
 from utils.train_test_utils import train_model, test_model, report_fnc1_score
 
 parser = argparse.ArgumentParser(description='CNN Based FNC Classifier')
 parser.add_argument('-test', action='store_true', default=False, help = 'Activate Testing')
 parser.add_argument('-weights_file', type=str, default=None, help = 'Path to Weights File')
 parser.add_argument('-condition', type=str, default='unrelated', help='Label to Condition Network')
+parser.add_argument('-apply_pos_filter', action='store_true', default=False, help = 'Apply POS filters')
 args = parser.parse_args()
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -20,10 +21,13 @@ if __name__ == '__main__':
 
     fields = get_FNC_1_fields()
     # Load the conditioned dataset
-    train_data, val_data = FNC_1.splits(True, condition=args.condition, **fields)
+    train_data, val_data = FNC_1.splits(True, condition=args.condition,
+            apply_pos_filter=args.apply_pos_filter, **fields)
     # Load the full training data to build the vocabulary
-    full_train_data = FNC_1_Train_Untouched(**fields)
-    test_data = FNC_1(False, condition=args.condition, **fields)
+    full_train_data = FNC_1_Train_Untouched(
+            apply_pos_filter=args.apply_pos_filter, **fields)
+    test_data = FNC_1(False, condition=args.condition,
+            apply_pos_filter=args.apply_pos_filter, **fields)
     # Build the vocabulary from all the data
     fields['headline_field'].build_vocab(full_train_data,
                                      max_size = DATA_CFG['MAX_VOCAB_SIZE'],
@@ -48,10 +52,10 @@ if __name__ == '__main__':
     print('Getting Model')
 
     TRAIN_CFG['WEIGHTS_PATH'] += f'_{args.condition}'
-    NET_CFG['num_classes'] = len(fields['label_field'].vocab)
+    VANILLA_COND_CNN_NET_CFG['num_classes'] = len(fields['label_field'].vocab)
     EMBED_CFG['H_V'] = len(fields['headline_field'].vocab)
     EMBED_CFG['B_V'] = len(fields['body_field'].vocab)
-    model = ConditionedCNNClassifier(NET_CFG, EMBED_CFG)
+    model = ConditionedCNNClassifier(VANILLA_COND_CNN_NET_CFG, EMBED_CFG)
 
     if not args.test:
         print('Train Model Selected')

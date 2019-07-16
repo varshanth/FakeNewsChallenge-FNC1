@@ -4,33 +4,34 @@ import random
 import torch
 from torchtext import data
 from csv import DictReader
+import pickle
 import sys
+import nltk
 # The following will tell python to look for packages in the above folder as well
 sys.path.append('..')
 from dl_approach_cfg import TRAIN_PATH, TEST_PATH, LEN_HEADLINE, LEN_BODY
 
-# Function to read the csv line by line and each line will be treated
-# as a dictionary element. The csv file must have the headers to be used as
-# keys to the dictionary
-def read_csv_into_rows(csv_file):
-    rows = []
-    with open(csv_file, 'r', encoding='utf-8') as table:
-        content = DictReader(table)
-        for line in content:
-            # Each row is a dictionary object
-            rows.append(line)
-    return rows
+def get_pos_filtered_tokens(pos_tagged_tokens):
+    accepted_pos = {
+            'CD',
+            'JJ', 'JJR', 'JJS',
+            'NN', 'NNS', 'NNP', 'NNPS',
+            'RB', 'RBR', 'RBS', 'VB',
+            'VBG','VBD', 'VBP', 'VBZ',
+            }
+    filt_tokens = [tok_pos[0] for tok_pos in pos_tagged_tokens
+                   if tok_pos[1] in accepted_pos]
+    return filt_tokens
 
-# Function used to filter the words in the title/headline, tokenize the words
-# and return the desired number of tokens
-def tokenize_and_limit(sentence, limit):
-    sentence = re.sub('-', ' ', sentence)
-    filtered_tokens = re.findall('[a-zA-Z]+|[0-9]+|[\!\?\.\',\"]+', sentence)
-    tokenized = [tok.lower() for tok in filtered_tokens]
-    if len(tokenized) < limit:
-        tokenized += ['<pad>'] * (limit - len(tokenized))
-    tokenized = tokenized[:limit]
-    return tokenized
+def filter_and_limit_tokens(pos_tagged_tokens, apply_pos_filter, limit):
+    if apply_pos_filter:
+        output_tokens = get_pos_filtered_tokens(pos_tagged_tokens)
+    else:
+        output_tokens = [tok_pos[0] for tok_pos in pos_tagged_tokens]
+    if len(output_tokens) < limit:
+        output_tokens += ['<pad>'] * (limit - len(output_tokens))
+    output_tokens = output_tokens[:limit]
+    return output_tokens
 
 # Function to create & retrieve the data Fields used for the FNC_1 dataset
 def get_FNC_1_fields():
@@ -49,13 +50,15 @@ def get_FNC_1_fields():
 class FNC_1(data.Dataset):
     def __init__(self, train_flag,
             headline_field, body_field, label_field, condition_field,
-            condition, examples=None, **kwargs):
+            condition, apply_pos_filter=False, examples=None, **kwargs):
         """Create the conditioned FNC dataset instance given fields.
         Arguments:
             headline_field: The field that will be used for headline data.
             body_field: The field that will be used for body data.
             label_field: The field that will be used for label data.
             condition_field: The field that will be used to indicate the conditioning label
+            condition: Which label to use to condition the net
+            apply_pos_filter: Apply POS filter on the tokens or not
             Remaining keyword arguments: Passed to the constructor of
                 data.Dataset.
         """
@@ -67,23 +70,11 @@ class FNC_1(data.Dataset):
         if examples is None:
             # When the dataset creation is called standalone without the datapoints
             # being rendered
-            stances_path = TRAIN_PATH['stances'] if train_flag else TEST_PATH['stances']
-            bodies_path = TRAIN_PATH['bodies'] if train_flag else TEST_PATH['bodies']
+            datapoints_path = TRAIN_PATH if train_flag else TEST_PATH
 
-            stances = read_csv_into_rows(stances_path)
-            article_rows = read_csv_into_rows(bodies_path)
-            articles = {article['Body ID']:article['articleBody'] for article in article_rows}
-
-            datapoints = [{
-                'h' : tokenize_and_limit(stance['Headline'], LEN_HEADLINE),
-                'b' : tokenize_and_limit(articles[stance['Body ID']], LEN_BODY),
-                'y' : stance['Stance'],
-                # Conditioning on the field that other fields must be opposite to
-                # This is used for the CosineEmbeddingLoss where the vectors representing
-                # opposing headlines and bodies will be trained to be orthogonal to each
-                # other.
-                'c' : -1. if stance['Stance'] == condition else 1.}
-                for stance in stances]
+            with open(datapoints_path, 'rb') as pkl_fp:
+                # datapoints = [{'h': [(headline_token, POS)*], 'b' : [(body_token, POS)*], 'y' : stance}*]
+                datapoints = pickle.load(pkl_fp)
 
             if condition != 'unrelated':
                 print('Filtering out unrelated datapoints')
@@ -93,9 +84,20 @@ class FNC_1(data.Dataset):
             else:
                 # When the conditioning is on unrelated, all the other datapoints apart
                 # from unrelated datapoints are considered related
-                for i in range(len(datapoints)):
-                    if datapoints[i]['y'] != 'unrelated':
-                        datapoints[i]['y'] = 'related'
+                for datapoint in datapoints:
+                    if datapoint['y'] != 'unrelated':
+                        datapoint['y'] = 'related'
+
+            for datapoint in datapoints:
+                datapoint['h'] = filter_and_limit_tokens(
+                        datapoint['h'], apply_pos_filter, LEN_HEADLINE)
+                datapoint['b'] = filter_and_limit_tokens(
+                        datapoint['b'], apply_pos_filter, LEN_BODY)
+                # Conditioning on the field that other fields must be opposite to
+                # This is used for the CosineEmbeddingLoss where the vectors representing
+                # opposing headlines and bodies will be trained to be orthogonal to each
+                # other.
+                datapoint['c'] = -1. if datapoint['y'] == condition else 1.
 
             examples = [data.Example.fromlist([
                 " ".join(datapoint['h']),
@@ -108,7 +110,8 @@ class FNC_1(data.Dataset):
 
     @classmethod
     def splits(cls, train_flag, headline_field, body_field, label_field,
-        condition_field, condition, dev_ratio=.07, shuffle=True, **kwargs):
+        condition_field, condition, apply_pos_filter = False,
+        dev_ratio=.008, shuffle=True, **kwargs):
         """Create dataset objects for splits of the FNC_1 dataset.
         Arguments:
             headline_field: The field that will be used for the headline.
@@ -116,22 +119,23 @@ class FNC_1(data.Dataset):
             label_field: The field that will be used for label data.
             condition_field: The field that will be used as the conditioning label
             condition: Which label to use to condition the net
+            apply_pos_filter: Apply POS filter on the tokens or not
             dev_ratio: The ratio that will be used to get split validation dataset.
             shuffle: Whether to shuffle the data before split.
             Remaining keyword arguments: Passed to the splits method of
                 Dataset.
         """
         examples = cls(True, headline_field, body_field, label_field, condition_field,
-            condition, **kwargs).examples
+            condition, apply_pos_filter, **kwargs).examples
         if shuffle: random.shuffle(examples)
         dev_index = -1 * int(dev_ratio*len(examples))
 
         # Create train & test splits by calling the original class method to create
         # instances, but this time with the data already in hand
         return (cls(True, headline_field, body_field, label_field, condition_field,
-            condition, examples=examples[:dev_index]),
+            condition, apply_pos_filter, examples=examples[:dev_index]),
             cls(True, headline_field, body_field, label_field, condition_field,
-                condition, examples=examples[dev_index:]))
+                condition, apply_pos_filter, examples=examples[dev_index:]))
 
 # This class should be used when evaluating the entire test dataset (including unrelated)
 # when the model is conditioned for 'disagree'. The unrelated datapoints will be hard
@@ -143,13 +147,14 @@ class FNC_1(data.Dataset):
 # THIS DATASET SHOULD NOT BE USED FOR TRAINING
 class FNC_1_TEST_Unrelated_Is_Discuss(data.Dataset):
     def __init__(self, headline_field, body_field, label_field, condition_field,
-        examples=None, **kwargs):
+        apply_pos_filter = False, examples=None, **kwargs):
         """Create the FNC TEST dataset instance given fields.
         Arguments:
             headline_field: The field that will be used for headline data.
             body_field: The field that will be used for body data.
             label_field: The field that will be used for label data.
             condition_field: The field that will be used to indicate the conditioning label
+            apply_pos_filter: Apply POS filter on the tokens or not
             Remaining keyword arguments: Passed to the constructor of
                 data.Dataset.
         """
@@ -160,19 +165,21 @@ class FNC_1_TEST_Unrelated_Is_Discuss(data.Dataset):
             ('condition', condition_field)]
 
         if examples is None:
-            stances_path = TEST_PATH['stances']
-            bodies_path = TEST_PATH['bodies']
+            datapoints_path = TEST_PATH
+            with open(datapoints_path, 'rb') as pkl_fp:
+                datapoints = pickle.load(pkl_fp)
 
-            stances = read_csv_into_rows(stances_path)
-            article_rows = read_csv_into_rows(bodies_path)
-            articles = {article['Body ID']:article['articleBody'] for article in article_rows}
-
-            datapoints = [{
-                'h' : tokenize_and_limit(stance['Headline'], LEN_HEADLINE),
-                'b' : tokenize_and_limit(articles[stance['Body ID']], LEN_BODY),
-                'y' : 'discuss' if stance['Stance'] == 'unrelated' else stance['Stance'],
-                'c' : -1. if stance['Stance'] == 'disagree' else 1.}
-                for stance in stances]
+            for datapoint in datapoints:
+                datapoint['h'] = filter_and_limit_tokens(
+                        datapoint['h'], apply_pos_filter, LEN_HEADLINE)
+                datapoint['b'] = filter_and_limit_tokens(
+                        datapoint['b'], apply_pos_filter, LEN_BODY)
+                datapoint['y'] = 'discuss' if datapoint['y'] == 'unrelated' else datapoint['y']
+                # Conditioning on the field that other fields must be opposite to
+                # This is used for the CosineEmbeddingLoss where the vectors representing
+                # opposing headlines and bodies will be trained to be orthogonal to each
+                # other.
+                datapoint['c'] = -1. if datapoint['y'] == 'disagree' else 1.
 
             examples = [data.Example.fromlist([
                 " ".join(datapoint['h']),
@@ -188,7 +195,7 @@ class FNC_1_TEST_Unrelated_Is_Discuss(data.Dataset):
 # can be used traditionally for building the vocabulary for the model
 class FNC_1_Train_Untouched(data.Dataset):
     def __init__(self, headline_field, body_field, label_field, condition_field,
-        examples=None, **kwargs):
+        apply_pos_filter=False, examples=None, **kwargs):
         """Create the FNC TRAIN dataset instance given fields.
         Arguments:
             headline_field: The field that will be used for headline data.
@@ -196,6 +203,7 @@ class FNC_1_Train_Untouched(data.Dataset):
             label_field: The field that will be used for label data.
             ### condition field IGNORED
             condition_field: The field that will be used to indicate the conditioning label
+            apply_pos_filter: Apply POS filter on the tokens or not
             Remaining keyword arguments: Passed to the constructor of
                 data.Dataset.
         """
@@ -206,19 +214,17 @@ class FNC_1_Train_Untouched(data.Dataset):
             ('condition', condition_field)]
 
         if examples is None:
-            stances_path = TRAIN_PATH['stances']
-            bodies_path = TRAIN_PATH['bodies']
+            datapoints_path = TRAIN_PATH
+            with open(datapoints_path, 'rb') as pkl_fp:
+                datapoints = pickle.load(pkl_fp)
 
-            stances = read_csv_into_rows(stances_path)
-            article_rows = read_csv_into_rows(bodies_path)
-            articles = {article['Body ID']:article['articleBody'] for article in article_rows}
-
-            datapoints = [{
-                'h' : tokenize_and_limit(stance['Headline'], LEN_HEADLINE),
-                'b' : tokenize_and_limit(articles[stance['Body ID']], LEN_BODY),
-                'y' : stance['Stance'],
-                'c' : None} # IGNORED
-                for stance in stances]
+            for datapoint in datapoints:
+                datapoint['h'] = filter_and_limit_tokens(
+                        datapoint['h'], apply_pos_filter, LEN_HEADLINE)
+                datapoint['b'] = filter_and_limit_tokens(
+                        datapoint['b'], apply_pos_filter, LEN_BODY)
+                datapoint['y'] = 'discuss' if datapoint['y'] == 'unrelated' else datapoint['y']
+                datapoint['c'] = None # THIS FIELD IS IGNORED
 
             examples = [data.Example.fromlist([
                 " ".join(datapoint['h']),

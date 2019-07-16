@@ -8,6 +8,7 @@ def parse_params():
     parser.add_argument('-c', '--clean-cache', action='store_true', default=False, help="clean cache files")
     parser.add_argument('-dl_weights_file', type=str, required = True, default=None, help = 'Path to DL Model Weights File')
     parser.add_argument('-gb_weights_file', type=str, required = True, default=None, help = 'Path to GB Weights File')
+    parser.add_argument('-apply_pos_filter', action='store_true', default=False, help = 'Apply POS filters')
     params = parser.parse_args()
 
     if not params.clean_cache:

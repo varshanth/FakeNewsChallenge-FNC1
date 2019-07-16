@@ -42,7 +42,7 @@ if __name__ == "__main__":
     check_version()
     params = parse_params()
     print('Running Conditioned CNN on FNC1 Dataset')
-    dl_model_pred = get_predictions_from_FNC_1_Test(params.dl_weights_file, DEVICE)
+    dl_model_pred = get_predictions_from_FNC_1_Test(params.dl_weights_file, params.apply_pos_filter, DEVICE)
 
     #Load the training dataset and generate folds
     d = DataSet()

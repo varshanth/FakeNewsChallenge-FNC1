@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import time
+from tqdm import tqdm
 from .early_stopping import EarlyStoppingWithSaveWeights
 from .score import report_score
 
@@ -26,14 +27,14 @@ def run_epoch(model, train_iter, criteria, optimizer):
     epoch_loss = 0
     epoch_acc = 0
     model.train()
-    for batch in train_iter:
+    for batch in tqdm(train_iter):
         optimizer.zero_grad()
         predictions, h_vec, b_vec = model(batch.headline, batch.body)
 
         classif_loss = criteria['classif'](predictions, batch.label)
         condition_field_alignment_loss = criteria['condition_field_align'](
                 h_vec, b_vec, batch.condition)
-        total_loss = classif_loss + condition_field_alignment_loss
+        total_loss =  classif_loss + condition_field_alignment_loss
         acc = categorical_accuracy(predictions, batch.label)
 
         total_loss.backward()
@@ -87,13 +88,14 @@ def train_model(model, train_iter, val_iter, device, train_cfg):
 
     for epoch in range(train_cfg['N_EPOCHS']):
         start_time = time.time()
+        print(f'Epoch {epoch+1}')
         train_loss, train_acc = run_epoch(model, train_iter, criteria, optimizer)
         val_loss, val_acc = evaluate(model, val_iter, criteria)
         end_time = time.time()
         lr_scheduler.step()
         ep_m, ep_s = epoch_time(start_time, end_time)
 
-        print(f'Epoch {epoch+1} : {ep_m}m {ep_s}s')
+        print(f'Epoch Duration: {ep_m}m {ep_s}s')
         print(f'Training Loss: {train_loss} Accuracy: {train_acc}')
         print(f'Validation Loss: {val_loss} Accuracy: {val_acc}')
         if es.step(val_loss):
@@ -118,6 +120,7 @@ def test_model(model, test_iter, device):
 def get_test_predictions(model, test_iter, label_field):
     # Assuming test iteration will iterate only once
     model.eval()
+    print('Getting Test Predictions from DL Model')
     with torch.no_grad():
         for batch in test_iter:
             predictions, h_vec, b_vec = model(batch.headline, batch.body)
@@ -128,6 +131,7 @@ def get_test_predictions(model, test_iter, label_field):
 
 def report_fnc1_score(model, test_iter, label_field):
     model.eval()
+    print('Getting Test Predictions from DL Model')
     with torch.no_grad():
         for batch in test_iter:
             predictions, h_vec, b_vec = model(batch.headline, batch.body)

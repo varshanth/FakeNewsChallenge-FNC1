@@ -1,21 +1,14 @@
-TRAIN_PATH = {
-        'stances': 'fnc-1/train_stances.csv',
-        'bodies' : 'fnc-1/train_bodies.csv'
-        }
-
-TEST_PATH = {
-        'stances' : 'fnc-1/competition_test_stances.csv',
-        'bodies'  : 'fnc-1/competition_test_bodies.csv'
-        }
+TRAIN_PATH = 'fnc_pkl/train_datapoints.pkl'
+TEST_PATH = 'fnc_pkl/test_datapoints.pkl'
 
 LEN_HEADLINE = 15
 LEN_BODY = 60
 
 TRAIN_CFG = {
          'BATCH_SIZE' : 32,
-         'N_EPOCHS' : 15,
+         'N_EPOCHS' : 7,
          'WEIGHTS_PATH' : 'model_chkpts/cond_cnn_classif',
-         'PATIENCE' : 4,
+         'PATIENCE' : 2,
          'LR' : 0.001,
          'LR_DECAY_STEPS' : 10,
          'LR_DECAY_GAMMA' : 0.1,
@@ -27,12 +20,34 @@ DATA_CFG = {
         'VECTOR_SIZE' : 100,
         }
 
-NET_CFG = {
+VANILLA_COND_CNN_NET_CFG = {
         'h_num_filt' : 256,
         'h_n_list' : [2,3,4],
         'b_num_filt' : 192,
         'b_n_list' : [2,3,4,5],
-        'num_h_tokens' : LEN_HEADLINE,
+        'num_classes' : None, # To fill dynamically
+        'dropout_rate' : 0.4,
+        }
+
+POS_TAGGED_COND_CNN_NET_CFG = {
+        'h_num_filt' : 256,
+        'h_n_list' : [1,2,3],
+        'b_num_filt' : 256,
+        'b_n_list' : [1,2,3],
+        'num_classes' : None, # To fill dynamically
+        'dropout_rate' : 0.4,
+        }
+
+SHARED_CONV_VANILLA_COND_CNN_NET_CFG = {
+        'num_filt' : 256,
+        'n_list' : [2,3,4],
+        'num_classes' : None, # To fill dynamically
+        'dropout_rate' : 0.4,
+        }
+
+SHARED_CONV_POS_TAGGED_COND_CNN_NET_CFG = {
+        'num_filt' : 256,
+        'n_list' : [1,2,3],
         'num_classes' : None, # To fill dynamically
         'dropout_rate' : 0.4,
         }
