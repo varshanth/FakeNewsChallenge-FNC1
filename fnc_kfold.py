@@ -25,10 +25,7 @@ def generate_features(stances,dataset,name):
     for stance in stances:
         if name != 'competition': y.append(LABELS_RELATED.index(stance['Stance']))
         else : y.append(LABELS.index(stance['Stance']))
-<<<<<<< HEAD
-=======
         # y.append(LABELS.index(stance['Stance']))
->>>>>>> upstream/master
         h.append(stance['Headline'])
         b.append(dataset.articles[stance['Body ID']])
 
@@ -111,13 +108,13 @@ if __name__ == "__main__":
         pickle.dump(best_fold, open(params.gb_weights_file, 'wb'))
 
     best_fold = pickle.load(open(params.gb_weights_file, 'rb'))
-    #Run on Holdout set and report the final score on the holdout set
-    predicted = [LABELS_RELATED[int(a)] for a in best_fold.predict(X_holdout)]
-    actual = [LABELS_RELATED[int(a)] for a in y_holdout]
+    # Run on Holdout set and report the final score on the holdout set
+    # predicted = [LABELS_RELATED[int(a)] for a in best_fold.predict(X_holdout)]
+    # actual = [LABELS_RELATED[int(a)] for a in y_holdout]
     # predicted = [LABELS[int(a)] for a in best_fold.predict(X_holdout)]
     # actual = [LABELS[int(a)] for a in y_holdout]
 
-    print("Scores on the dev set")
+    # print("Scores on the dev set")
     # report_score(actual,predicted)
     print("")
     print("")

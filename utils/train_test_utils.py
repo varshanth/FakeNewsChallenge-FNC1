@@ -24,7 +24,8 @@ def categorical_accuracy(preds, y):
 
 
 def run_epoch(model, train_iter, criteria, optimizer):
-    epoch_loss = 0
+    epoch_class_loss = 0
+    epoch_cosine_loss = 0
     epoch_acc = 0
     model.train()
     for batch in tqdm(train_iter):
@@ -32,7 +33,10 @@ def run_epoch(model, train_iter, criteria, optimizer):
         predictions, h_vec, b_vec = model(batch.headline, batch.body)
 
         classif_loss = criteria['classif'](predictions, batch.label)
-        condition_field_alignment_loss = criteria['condition_field_align'](
+        # Multiplier of 2 is chosen to amplify the alignment loss
+        # This is because the model tries to minimize the classification loss
+        # since it is a low hanging fruit
+        condition_field_alignment_loss = 2 * criteria['condition_field_align'](
                 h_vec, b_vec, batch.condition)
         total_loss =  classif_loss + condition_field_alignment_loss
         acc = categorical_accuracy(predictions, batch.label)
@@ -40,10 +44,13 @@ def run_epoch(model, train_iter, criteria, optimizer):
         total_loss.backward()
         optimizer.step()
 
-        epoch_loss += total_loss.item()
         epoch_acc += acc.item()
+        epoch_class_loss += classif_loss.item()
+        epoch_cosine_loss += condition_field_alignment_loss.item()
 
-    return epoch_loss / len(train_iter), epoch_acc / len(train_iter)
+    return  epoch_class_loss / len(train_iter), \
+            epoch_cosine_loss / len(train_iter), \
+            epoch_acc / len(train_iter)
 
 
 def evaluate(model, iterator, criteria):
@@ -54,7 +61,7 @@ def evaluate(model, iterator, criteria):
         for batch in iterator:
             predictions, h_vec, b_vec = model(batch.headline, batch.body)
             classif_loss = criteria['classif'](predictions, batch.label)
-            condition_field_alignment_loss = criteria['condition_field_align'](
+            condition_field_alignment_loss = 2 * criteria['condition_field_align'](
                     h_vec, b_vec, batch.condition)
             total_loss = classif_loss + condition_field_alignment_loss
             acc = categorical_accuracy(predictions, batch.label)
@@ -89,14 +96,16 @@ def train_model(model, train_iter, val_iter, device, train_cfg):
     for epoch in range(train_cfg['N_EPOCHS']):
         start_time = time.time()
         print(f'Epoch {epoch+1}')
-        train_loss, train_acc = run_epoch(model, train_iter, criteria, optimizer)
+        train_class_loss, train_cosine_loss, train_acc = run_epoch(
+                model, train_iter, criteria, optimizer)
         val_loss, val_acc = evaluate(model, val_iter, criteria)
         end_time = time.time()
         lr_scheduler.step()
         ep_m, ep_s = epoch_time(start_time, end_time)
 
         print(f'Epoch Duration: {ep_m}m {ep_s}s')
-        print(f'Training Loss: {train_loss} Accuracy: {train_acc}')
+        print(f'Training Loss: Class = {train_class_loss} Cosine = {train_cosine_loss}')
+        print(f'Training Accuracy: {train_acc}')
         print(f'Validation Loss: {val_loss} Accuracy: {val_acc}')
         if es.step(val_loss):
             break
