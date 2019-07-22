@@ -91,9 +91,29 @@ def word_tfidf_bodies(bodies):
 
     return body_part1,body_part2,body_part3,body_part4
 
+def body_split_sentences(bodies):
+    body_part1 = []
+    body_part2 = []
+    body_part3 = []
+    body_part4 = []
+    for body in tqdm(bodies):
+
+        sentences = re.split(r'[.?!]\s*', body)
+        split_size = int(len(sentences)/4)
+        i=0
+        body_part1.append(" ".join(sentences[i:i+split_size]))
+        i += split_size
+        body_part2.append(" ".join(sentences[i:i+split_size]))
+        i += split_size
+        body_part3.append(" ".join(sentences[i:i+split_size]))
+        i += split_size
+        body_part4.append(" ".join(sentences[i:i+split_size]))
+
+    return body_part1,body_part2,body_part3,body_part4
+
 def word_overlap_split_bodies_features(headlines, bodies):
 
-    body_part1,body_part2,body_part3,body_part4 = word_tfidf_bodies(bodies)
+    body_part1,body_part2,body_part3,body_part4 = body_split_sentences(bodies)
     X1 = word_overlap_pos_features(headlines, body_part1)
     print ("\n\n X1 matrix size - \n")
     print(len(X1))

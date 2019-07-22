@@ -36,7 +36,7 @@ def generate_features(stances,dataset,name):
     X_overlap_pos = gen_or_load_feats(word_overlap_pos_features, h, b, "features/overlap_pos."+name+".npy")
     X_overlap_quotes = gen_or_load_feats(word_overlap_quotes_features, h, b, "features/overlap_quotes."+name+".npy")
     X_tfidf = gen_or_load_feats(word_tfidf_features, h, b, "features/tfidf_fea."+name+".npy")
-    X_overlap_pos_pn = gen_or_load_feats(word_overlap_split_bodies_features,  h, b, "features/overlap_pos_split_bodies."+name+".npy")
+    X_overlap_pos_pn = gen_or_load_feats(word_overlap_split_bodies_features,  h, b, "features/overlap_pos_sentence_split_bodies."+name+".npy")
 
     X = np.c_[X_hand, X_polarity, X_refuting, X_overlap, X_overlap_pos, X_overlap_quotes, X_tfidf, X_overlap_pos_pn]
     return X,y
