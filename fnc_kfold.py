@@ -6,8 +6,8 @@ import os
 
 # from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
-from feature_engineering import refuting_features, polarity_features, hand_features, gen_or_load_feats, word_tfidf_features
-from feature_engineering import word_overlap_features, word_overlap_pos_features, word_overlap_quotes_features
+from feature_engineering import refuting_features, polarity_features, hand_features, gen_or_load_feats, word_tfidf_features, word_overlap_split_bodies_features
+from feature_engineering import word_overlap_features, word_overlap_pos_features, word_overlap_quotes_features, word_tfidf_bpe_features
 from utils.dataset import DataSet
 from utils.generate_test_splits import kfold_split, get_stances_for_folds
 from utils.score import report_score, LABELS, LABELS_RELATED, score_submission, score_cal
@@ -36,6 +36,7 @@ def generate_features(stances,dataset,name):
     X_overlap_pos = gen_or_load_feats(word_overlap_pos_features, h, b, "features/overlap_pos."+name+".npy")
     X_overlap_quotes = gen_or_load_feats(word_overlap_quotes_features, h, b, "features/overlap_quotes."+name+".npy")
     X_tfidf = gen_or_load_feats(word_tfidf_features, h, b, "features/tfidf_fea."+name+".npy")
+    X_overlap_pos_pn = gen_or_load_feats(word_overlap_split_bodies_features,  h, b, "features/overlap_pos_split_bodies."+name+".npy")
 
     X = np.c_[X_hand, X_polarity, X_refuting, X_overlap, X_overlap_pos, X_overlap_quotes, X_tfidf]
     return X,y
@@ -44,7 +45,8 @@ if __name__ == "__main__":
     check_version()
     params = parse_params()
     print('Running Conditioned CNN on FNC1 Dataset')
-    dl_model_pred = get_predictions_from_FNC_1_Test(params.dl_weights_file, params.apply_pos_filter, DEVICE)
+    dl_model_pred, _unused1, _unused2 = get_predictions_from_FNC_1_Test(
+            params.dl_weights_file, params.apply_pos_filter, DEVICE)
 
     #Load the training dataset and generate folds
     d = DataSet()

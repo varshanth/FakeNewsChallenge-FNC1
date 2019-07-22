@@ -97,7 +97,7 @@ class FNC_1(data.Dataset):
                 # This is used for the CosineEmbeddingLoss where the vectors representing
                 # opposing headlines and bodies will be trained to be orthogonal to each
                 # other.
-                datapoint['c'] = -1. if datapoint['y'] == condition else 1.
+                datapoint['c'] = -1. if datapoint['y'] in {condition} else 1.
 
             examples = [data.Example.fromlist([
                 " ".join(datapoint['h']),
@@ -111,7 +111,7 @@ class FNC_1(data.Dataset):
     @classmethod
     def splits(cls, train_flag, headline_field, body_field, label_field,
         condition_field, condition, apply_pos_filter = False,
-        dev_ratio=.008, shuffle=True, **kwargs):
+        dev_ratio=.003, shuffle=True, **kwargs):
         """Create dataset objects for splits of the FNC_1 dataset.
         Arguments:
             headline_field: The field that will be used for the headline.

@@ -6,9 +6,9 @@ LEN_BODY = 60
 
 TRAIN_CFG = {
          'BATCH_SIZE' : 32,
-         'N_EPOCHS' : 7,
+         'N_EPOCHS' : 5,
          'WEIGHTS_PATH' : 'model_chkpts/cond_cnn_classif',
-         'PATIENCE' : 2,
+         'PATIENCE' : 1,
          'LR' : 0.001,
          'LR_DECAY_STEPS' : 10,
          'LR_DECAY_GAMMA' : 0.1,

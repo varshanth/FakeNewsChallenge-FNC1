@@ -136,7 +136,7 @@ def get_test_predictions(model, test_iter, label_field):
             predictions = predictions.argmax(dim = 1).cpu().detach().numpy()
             actual = batch.label.cpu().detach().numpy()
             predictions = [label_field.vocab.itos[pred] for pred in predictions]
-            return predictions
+            return predictions, h_vec.cpu().detach().numpy(), b_vec.cpu().detach().numpy()
 
 def report_fnc1_score(model, test_iter, label_field):
     model.eval()

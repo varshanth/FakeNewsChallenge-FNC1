@@ -42,6 +42,78 @@ def remove_stopwords(l):
     # Removes stopwords from a list of tokens
     return [w for w in l if w not in feature_extraction.text.ENGLISH_STOP_WORDS]
 
+def get_tokenized_encoder(s):
+    return [word.replace("▁","") for word in bpemb_en.encode(s)]
+
+def word_tfidf_bpe_features(headlines, bodies):
+
+    # total_vocab = [get_tokenized_pos(clean(line)) for line in tqdm(headlines+bodies)]
+    total_vocab = [word.replace("▁","") for line in tqdm(headlines+bodies) for word in bpemb_en.encode(line)]
+    # total_vocab_flatten = [word for subword in total_vocab for word in subword]
+    print ("\n\n Total Vocab size - \n")
+    print(len(total_vocab))
+
+    word_counter = Counter(total_vocab)
+    most_occur = word_counter.most_common(8000)
+    vocab = [wd for wd,count in most_occur]
+
+    tfidf_vectorizer = TfidfVectorizer(use_idf=True, vocabulary=vocab, analyzer='word', tokenizer=get_tokenized_encoder)
+    headlines_tfidf = tfidf_vectorizer.fit_transform(headlines)
+    headlines_matrix = headlines_tfidf.toarray()
+    print ("\n\n headline matrix size - \n")
+    print(headlines_matrix.shape)
+
+    bodies_tfidf = tfidf_vectorizer.fit_transform(bodies)
+    bodies_matrix = bodies_tfidf.toarray()
+    print ("\n\n body matrix size - \n")
+    print(bodies_matrix.shape)
+
+    similarity_df = cosine_similarity(headlines_matrix, bodies_matrix)
+    X = np.diagonal(similarity_df)
+    return X
+
+
+def word_tfidf_bodies(bodies):
+    body_part1 = []
+    body_part2 = []
+    body_part3 = []
+    body_part4 = []
+    for body in tqdm(bodies):
+        split_size = int(len(body)/4)
+        i=0
+        body_part1.append(body[i:i+split_size])
+        i += split_size
+        body_part2.append(body[i:i+split_size])
+        i += split_size
+        body_part3.append(body[i:i+split_size])
+        i += split_size
+        body_part4.append(body[i:i+split_size])
+
+    return body_part1,body_part2,body_part3,body_part4
+
+def word_overlap_split_bodies_features(headlines, bodies):
+
+    body_part1,body_part2,body_part3,body_part4 = word_tfidf_bodies(bodies)
+    X1 = word_overlap_pos_features(headlines, body_part1)
+    print ("\n\n X1 matrix size - \n")
+    print(len(X1))
+
+    X2 = word_overlap_pos_features(headlines, body_part2)
+    print ("\n\n X2 matrix size - \n")
+    print(len(X2))
+
+    X3 = word_overlap_pos_features(headlines, body_part3)
+    print ("\n\n X3 matrix size - \n")
+    print(len(X3))
+
+    X4 = word_overlap_pos_features(headlines, body_part4)
+    print ("\n\n X4 matrix size - \n")
+    print(len(X4))
+
+    return np.c_[X1, X2, X3, X4]
+
+
+
 
 def gen_or_load_feats(feat_fn, headlines, bodies, feature_file):
     if not os.path.isfile(feature_file):
