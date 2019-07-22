@@ -1,8 +1,9 @@
 from csv import DictReader
-
+from utils.system import parse_params
 
 class DataSet():
     def __init__(self, name="train", path="fnc-1"):
+        params = parse_params()
         self.path = path
 
         print("Reading dataset")
@@ -16,7 +17,7 @@ class DataSet():
         #make the body ID an integer value
         for s in self.stances:
             s['Body ID'] = int(s['Body ID'])
-            # if s['Stance'] != 'unrelated' and name != 'competition_test': s['Stance'] = 'related'
+            if params.run_2_class and s['Stance'] != 'unrelated' and name != 'competition_test': s['Stance'] = 'related'
 
         #copy all bodies into a dictionary
         for article in articles:
