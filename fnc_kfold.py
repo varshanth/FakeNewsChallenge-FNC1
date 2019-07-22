@@ -23,9 +23,9 @@ def generate_features(stances,dataset,name):
     h, b, y = [],[],[]
 
     for stance in stances:
-        if name != 'competition': y.append(LABELS_RELATED.index(stance['Stance']))
-        else : y.append(LABELS.index(stance['Stance']))
-        # y.append(LABELS.index(stance['Stance']))
+        # if name != 'competition': y.append(LABELS_RELATED.index(stance['Stance']))
+        # else : y.append(LABELS.index(stance['Stance']))
+        y.append(LABELS.index(stance['Stance']))
         h.append(stance['Headline'])
         b.append(dataset.articles[stance['Body ID']])
 
@@ -38,7 +38,7 @@ def generate_features(stances,dataset,name):
     X_tfidf = gen_or_load_feats(word_tfidf_features, h, b, "features/tfidf_fea."+name+".npy")
     X_overlap_pos_pn = gen_or_load_feats(word_overlap_split_bodies_features,  h, b, "features/overlap_pos_split_bodies."+name+".npy")
 
-    X = np.c_[X_hand, X_polarity, X_refuting, X_overlap, X_overlap_pos, X_overlap_quotes, X_tfidf]
+    X = np.c_[X_hand, X_polarity, X_refuting, X_overlap, X_overlap_pos, X_overlap_quotes, X_tfidf, X_overlap_pos_pn]
     return X,y
 
 if __name__ == "__main__":
@@ -89,17 +89,17 @@ if __name__ == "__main__":
             clf = GradientBoostingClassifier(n_estimators=200, random_state=14128, verbose=True)
             clf.fit(X_train, y_train)
 
-            predicted = [LABELS_RELATED[int(a)] for a in clf.predict(X_test)]
-            actual = [LABELS_RELATED[int(a)] for a in y_test]
+            # predicted = [LABELS_RELATED[int(a)] for a in clf.predict(X_test)]
+            # actual = [LABELS_RELATED[int(a)] for a in y_test]
 
-            # predicted = [LABELS[int(a)] for a in clf.predict(X_test)]
-            # actual = [LABELS[int(a)] for a in y_test]
+            predicted = [LABELS[int(a)] for a in clf.predict(X_test)]
+            actual = [LABELS[int(a)] for a in y_test]
 
-            fold_score = score_cal(actual, predicted)
-            max_fold_score = score_cal(actual, actual)
+            # fold_score = score_cal(actual, predicted)
+            # max_fold_score = score_cal(actual, actual)
 
-            # fold_score, _ = score_submission(actual, predicted)
-            # max_fold_score, _ = score_submission(actual, actual)
+            fold_score, _ = score_submission(actual, predicted)
+            max_fold_score, _ = score_submission(actual, actual)
 
             score = fold_score/max_fold_score
 
@@ -113,18 +113,18 @@ if __name__ == "__main__":
     # Run on Holdout set and report the final score on the holdout set
     # predicted = [LABELS_RELATED[int(a)] for a in best_fold.predict(X_holdout)]
     # actual = [LABELS_RELATED[int(a)] for a in y_holdout]
-    # predicted = [LABELS[int(a)] for a in best_fold.predict(X_holdout)]
-    # actual = [LABELS[int(a)] for a in y_holdout]
+    predicted = [LABELS[int(a)] for a in best_fold.predict(X_holdout)]
+    actual = [LABELS[int(a)] for a in y_holdout]
 
     # print("Scores on the dev set")
-    # report_score(actual,predicted)
+    report_score(actual,predicted)
     print("")
     print("")
 
 
     #Run on competition dataset
-    predicted = [LABELS_RELATED[int(a)] for a in best_fold.predict(X_competition)]
-    # predicted = [LABELS[int(a)] for a in best_fold.predict(X_competition)]
+    # predicted = [LABELS_RELATED[int(a)] for a in best_fold.predict(X_competition)]
+    predicted = [LABELS[int(a)] for a in best_fold.predict(X_competition)]
     predicted_combined = [a if a == "unrelated" else aD for a,aD in zip(predicted, dl_model_pred)]
     actual = [LABELS[int(a)] for a in y_competition]
     report_score(actual, predicted_combined)

@@ -15,7 +15,7 @@ _wnl = nltk.WordNetLemmatizer()
 #              'RB', 'RBR', 'RBS', 'VB',
 #              'VBG','VBD', 'VBP', 'VBZ']
 
-master_words = ['NN', 'VBG', 'RB', 'NNS']
+master_words = ['NN', 'VBG', 'RB']
 
 
 def normalize_word(w):
