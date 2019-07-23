@@ -16,6 +16,8 @@ def parse_cmd_line_args():
             default=None, help = 'Path to Weights File')
     parser.add_argument('-plots_dir', type=str, required=True, default=None,
             help='Path to the Plots Directory to Output')
+    parser.add_argument('-misclassified', action='store_true', default=False,
+            help = 'Show plots only for misclassified points')
     parser.add_argument('-apply_pos_filter', action='store_true', default=False,
             help = 'Apply POS Filters')
     args = parser.parse_args()
@@ -113,6 +115,13 @@ if __name__ == '__main__':
     b_vec = b_vec[non_unrelated_indices]
 
     labels = np.unique(gold_labels)
+
+    if args.misclassified:
+        misclassified_indices = gold_labels != dl_model_pred
+        gold_labels = gold_labels[misclassified_indices]
+        h_vec = h_vec[misclassified_indices]
+        b_vec = b_vec[misclassified_indices]
+        dl_model_pred = dl_model_pred[misclassified_indices]
 
     grouped_predictions = {
             label : {
