@@ -7,14 +7,13 @@ import os
 # from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
 from feature_engineering import refuting_features, polarity_features, hand_features, gen_or_load_feats, word_tfidf_features, word_overlap_split_bodies_features
-from feature_engineering import word_overlap_features, word_overlap_pos_features, word_overlap_quotes_features, word_tfidf_bpe_features
+from feature_engineering import word_overlap_features, word_overlap_pos_features, word_overlap_quotes_features, word_tfidf_pos_ss_features, word_overlap_bpe_features
 from utils.dataset import DataSet
 from utils.generate_test_splits import kfold_split, get_stances_for_folds
 from utils.score import report_score, LABELS, LABELS_RELATED, score_submission, score_cal
 
 from utils.system import parse_params, check_version
 from test_dl_model import get_predictions_from_FNC_1_Test
-import argparse
 import torch
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -37,22 +36,14 @@ def generate_features(stances,dataset,name):
     X_refuting = gen_or_load_feats(refuting_features, h, b, "features/refuting."+name+".npy")
     X_polarity = gen_or_load_feats(polarity_features, h, b, "features/polarity."+name+".npy")
     X_hand = gen_or_load_feats(hand_features, h, b, "features/hand."+name+".npy")
-    X_overlap_pos = gen_or_load_feats(
-            word_overlap_pos_features, h, b,
-            "features/overlap_pos."+name+".npy")
-    X_overlap_quotes = gen_or_load_feats(
-            word_overlap_quotes_features, h, b,
-            "features/overlap_quotes."+name+".npy")
-    X_tfidf = gen_or_load_feats(
-            word_tfidf_features, h, b,
-            "features/tfidf_pos."+name+".npy")
-    X_overlap_pos_sentence_split_bodies = gen_or_load_feats(
-            word_overlap_split_bodies_features,  h, b,
-            "features/overlap_pos_sentence_split_bodies."+name+".npy")
+    X_overlap_quotes = gen_or_load_feats(word_overlap_quotes_features, h, b, "features/overlap_quotes."+name+".npy")
+    X_overlap_pos = gen_or_load_feats(word_overlap_pos_features, h, b, "features/overlap_pos."+name+".npy")
+    X_overlap_pos_sentence = gen_or_load_feats(word_overlap_split_bodies_features,  h, b, "features/overlap_pos_sentence_split_bodies."+name+".npy")
+    X_tfidf = gen_or_load_feats(word_tfidf_features, h, b, "features/tfidf_pos."+name+".npy")
+    X_tfidf_max = gen_or_load_feats(word_tfidf_pos_ss_features, h, b, "features/tfidf_pos_max."+name+".npy")
+    X_overlap_bpe_SS = gen_or_load_feats(word_overlap_bpe_features,  h, b, "features/overlap_bpe_nltk_tag3."+name+".npy")
 
-    X = np.c_[X_hand, X_polarity, X_refuting, X_overlap,
-              # Newly Added
-              X_overlap_pos, X_overlap_quotes, X_tfidf, X_overlap_pos_sentence_split_bodies]
+    X = np.c_[X_hand, X_polarity, X_refuting, X_overlap, X_overlap_quotes, X_overlap_pos, X_overlap_pos_sentence, X_tfidf, X_tfidf_max, X_overlap_bpe_SS]
     return X,y
 
 if __name__ == "__main__":
@@ -70,8 +61,6 @@ if __name__ == "__main__":
     # Load the competition dataset
     competition_dataset = DataSet("competition_test")
     stances = pd.DataFrame(competition_dataset.stances)
-    # stances['Body ID'].to_csv(r'baseline-results/body_id.csv', index=False, header=False)
-    # stances['Headline'].to_csv(r'baseline-results/headline.csv', index=False, header=False)
     X_competition, y_competition = generate_features(competition_dataset.stances, competition_dataset, "competition")
 
     Xs = dict()
@@ -81,7 +70,6 @@ if __name__ == "__main__":
     X_holdout,y_holdout = generate_features(hold_out_stances,d,"holdout")
     for fold in fold_stances:
         Xs[fold],ys[fold] = generate_features(fold_stances[fold],d,str(fold))
-
 
     best_score = 0
     best_fold = None
@@ -145,17 +133,10 @@ if __name__ == "__main__":
     predicted_combined = []
     if params.run_2_class:
         predicted = [LABELS_RELATED[int(a)] for a in best_fold.predict(X_competition)]
-        predicted_combined = [a if a == "unrelated" else aD for a,aD in zip(predicted, dl_model_pred)]
     else :
-        predicted_combined = [LABELS[int(a)] for a in best_fold.predict(X_competition)]
+        predicted = [LABELS[int(a)] for a in best_fold.predict(X_competition)]
 
+    predicted_combined = [a if a == "unrelated" else aD for a,aD in zip(predicted, dl_model_pred)]
     actual = [LABELS[int(a)] for a in y_competition]
-    report_score(actual, predicted_combined)
-    '''
-    predicted_df = pd.DataFrame(
-            {'gb_pred': predicted,
-             'dl_pred': dl_model_pred,
-             'actual' : actual})
-    predicted_df.to_csv(r'comparison.csv', index=False, header=True)
-    '''
     print("Scores on the test set")
+    report_score(actual, predicted_combined)
