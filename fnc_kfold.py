@@ -140,3 +140,7 @@ if __name__ == "__main__":
     actual = [LABELS[int(a)] for a in y_competition]
     print("Scores on the test set")
     report_score(actual, predicted_combined)
+
+    final_result = {"Headline" : stances['Headline'], "Body ID" : stances['Body ID'], 'Stance' : predicted_combined}
+    final_result = pd.DataFrame(final_result)
+    final_result.to_csv(r'baseline-results/submission.csv', index=False, header=True)
