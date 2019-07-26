@@ -7,9 +7,10 @@ from csv import DictReader
 import pickle
 import sys
 import nltk
+from .fnc_dataset_pickler import pos_tag_tokenize_and_pickle_fnc_dataset
 # The following will tell python to look for packages in the above folder as well
 sys.path.append('..')
-from dl_approach_cfg import TRAIN_PATH, TEST_PATH, LEN_HEADLINE, LEN_BODY
+from dl_approach_cfg import TRAIN_PATH, TEST_PATH, TRAIN_CSV, TEST_CSV, LEN_HEADLINE, LEN_BODY
 
 def get_pos_filtered_tokens(pos_tagged_tokens):
     accepted_pos = {
@@ -71,6 +72,13 @@ class FNC_1(data.Dataset):
             # When the dataset creation is called standalone without the datapoints
             # being rendered
             datapoints_path = TRAIN_PATH if train_flag else TEST_PATH
+
+            if not os.path.exists(datapoints_path):
+                # Pickled POS tagged datapoints not generated
+                print(f'Pickled datapoints not found at {datapoints_path}. \nGenerating them now')
+                csv_set = TRAIN_CSV if train_flag else TEST_CSV
+                pos_tag_tokenize_and_pickle_fnc_dataset(csv_set['stances'],
+                        csv_set['bodies'], datapoints_path)
 
             with open(datapoints_path, 'rb') as pkl_fp:
                 # datapoints = [{'h': [(headline_token, POS)*], 'b' : [(body_token, POS)*], 'y' : stance}*]
@@ -166,6 +174,13 @@ class FNC_1_TEST_Unrelated_Is_Discuss(data.Dataset):
 
         if examples is None:
             datapoints_path = TEST_PATH
+            if not os.path.exists(datapoints_path):
+                # Pickled POS tagged datapoints not generated
+                print(f'Pickled datapoints not found at {datapoints_path}. \nGenerating them now')
+                csv_set = TEST_CSV
+                pos_tag_tokenize_and_pickle_fnc_dataset(csv_set['stances'],
+                        csv_set['bodies'], datapoints_path)
+
             with open(datapoints_path, 'rb') as pkl_fp:
                 datapoints = pickle.load(pkl_fp)
 
@@ -215,6 +230,13 @@ class FNC_1_Train_Untouched(data.Dataset):
 
         if examples is None:
             datapoints_path = TRAIN_PATH
+            if not os.path.exists(datapoints_path):
+                # Pickled POS tagged datapoints not generated
+                print(f'Pickled datapoints not found at {datapoints_path}. \nGenerating them now')
+                csv_set = TRAIN_CSV
+                pos_tag_tokenize_and_pickle_fnc_dataset(csv_set['stances'],
+                        csv_set['bodies'], datapoints_path)
+
             with open(datapoints_path, 'rb') as pkl_fp:
                 datapoints = pickle.load(pkl_fp)
 

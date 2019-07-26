@@ -1,6 +1,16 @@
 TRAIN_PATH = 'fnc_pkl/train_datapoints.pkl'
 TEST_PATH = 'fnc_pkl/test_datapoints.pkl'
 
+TRAIN_CSV = {
+        'stances' : 'fnc-1/train_stances.csv',
+        'bodies' : 'fnc-1/train_bodies.csv',
+        }
+
+TEST_CSV = {
+        'stances' : 'fnc-1/competition_test_stances.csv',
+        'bodies' : 'fnc-1/competition_test_bodies.csv',
+        }
+
 LEN_HEADLINE = 15
 LEN_BODY = 60
 

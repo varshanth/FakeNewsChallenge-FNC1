@@ -35,6 +35,23 @@ def tokenize_and_limit(sentence, limit):
     tokenized = tokenized[:limit]
     return tokenized
 
+def pos_tag_tokenize_and_pickle_fnc_dataset(stances_csv, bodies_csv, pkl_path):
+    print('-------Started Pickling Dataset--------')
+    print('Reading the stances and bodies')
+    stances = read_csv_into_rows(stances_csv)
+    article_rows = read_csv_into_rows(bodies_csv)
+    articles = {article['Body ID']:article['articleBody'] for article in article_rows}
+    print('Tokenizing and POS Tagging the datapoints')
+    datapoints = [{
+        'h' : get_pos(tokenize_and_limit(stance['Headline'], HEADLINE_MAX)),
+        'b' : get_pos(tokenize_and_limit(articles[stance['Body ID']], BODY_MAX)),
+        'y' : stance['Stance'],
+        } for stance in tqdm(stances)]
+    print('Dumping the output to pkl')
+    with open(pkl_path, 'wb') as to_pkl_fp:
+        pickle.dump(datapoints, to_pkl_fp)
+    print('--------End Pickling Dataset---------')
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Tokenize FNC Dataset & Pickle Datapoints")
     parser.add_argument('-stances_csv', type=str, default=None, required=True,
@@ -44,20 +61,7 @@ if __name__ == '__main__':
     parser.add_argument('-pkl_path', type=str, default=None, required=True,
             help='Path to output the pickle file')
     args = parser.parse_args()
+    pos_tag_tokenize_and_pickle_fnc_dataset(args.stances_csv,
+            args.bodies_csv, args.pkl_path)
 
-    print('-------Start--------')
-    print('Reading the stances and bodies')
-    stances = read_csv_into_rows(args.stances_csv)
-    article_rows = read_csv_into_rows(args.bodies_csv)
-    articles = {article['Body ID']:article['articleBody'] for article in article_rows}
-    print('Tokenizing and POS Tagging the datapoints')
-    datapoints = [{
-        'h' : get_pos(tokenize_and_limit(stance['Headline'], HEADLINE_MAX)),
-        'b' : get_pos(tokenize_and_limit(articles[stance['Body ID']], BODY_MAX)),
-        'y' : stance['Stance'],
-        } for stance in tqdm(stances)]
-    print('Dumping the output to pkl')
-    with open(args.pkl_path, 'wb') as to_pkl_fp:
-        pickle.dump(datapoints, to_pkl_fp)
 
-    print('--------End---------')
