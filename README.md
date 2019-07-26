@@ -5,7 +5,7 @@
 <img width="180" height="120" src="https://github.com/varshanth/FakeNewsChallenge-FNC1/raw/conditioned_cnn_experimental/figures/ourlogo_withoutsig.png" alt="Penrose Bros logo">
 </div>
 
-- Authors:  
+Authors/Contributors:  
 * Varshanth R Rao  (Github: @varshanth)  
 * Ritik Arora (Github: @ritikarora13)  
   
