@@ -6,10 +6,14 @@ import argparse
 def parse_params():
     parser = argparse.ArgumentParser(description='FakeNewsChallenge fnc-1-baseline')
     parser.add_argument('-c', '--clean-cache', action='store_true', default=False, help="clean cache files")
+    parser.add_argument('-dl_weights_file', type=str, required = True, default=None, help = 'Path to DL Model Weights File')
+    parser.add_argument('-gb_weights_file', type=str, required = True, default=None, help = 'Path to GB Weights File')
+    parser.add_argument('-apply_pos_filter', action='store_true', default=False, help = 'Apply POS filters')
+    parser.add_argument('-run_2_class', action='store_true', default=False, help = 'Run the GB classifier for 2 classes - Related and Unrelated' )
     params = parser.parse_args()
 
     if not params.clean_cache:
-        return
+        return params
 
     dr = "features"
     for f in os.listdir(dr):
@@ -21,6 +25,7 @@ def parse_params():
         if os.path.isfile(fname):
             os.remove(fname)
     print("All clear")
+    return params
 
 def check_version():
     if sys.version_info.major < 3:

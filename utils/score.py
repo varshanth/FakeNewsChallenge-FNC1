@@ -1,9 +1,23 @@
 #Adapted from https://github.com/FakeNewsChallenge/fnc-1/blob/master/scorer.py
 #Original credit - @bgalbraith
 
-LABELS = ['agree', 'disagree', 'discuss', 'unrelated']
+LABELS = ['agree', 'disagree', 'discuss', 'unrelated', 'related']
 LABELS_RELATED = ['unrelated','related']
 RELATED = LABELS[0:3]
+
+
+def score_cal(gold_labels, test_labels):
+    score = 0.0
+    for i, (g, t) in enumerate(zip(gold_labels, test_labels)):
+        g_stance, t_stance = g, t
+        if g_stance == t_stance:
+            score += 0.25
+            if g_stance != 'unrelated':
+                score += 0.50
+        if g_stance in RELATED and t_stance in RELATED:
+            score += 0.25
+
+    return score
 
 def score_submission(gold_labels, test_labels):
     score = 0.0
