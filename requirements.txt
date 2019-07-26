@@ -1,5 +1,8 @@
-tqdm
-sklearn
-numpy
-scipy
-nltk
+pytorch==0.3
+numpy==1.13.1
+tqdm==4.15.0
+torchtext==0.3.1
+nltk==3.4
+scikit-learn==0.20.3
+bpemb==0.3.0
+scipy==1.2.1

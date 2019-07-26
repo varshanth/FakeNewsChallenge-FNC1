@@ -9,7 +9,7 @@ def parse_params():
     parser.add_argument('-dl_weights_file', type=str, required = True, default=None, help = 'Path to DL Model Weights File')
     parser.add_argument('-gb_weights_file', type=str, required = True, default=None, help = 'Path to GB Weights File')
     parser.add_argument('-apply_pos_filter', action='store_true', default=False, help = 'Apply POS filters')
-    parser.add_argument('-run_2_class', action='store_true', default=False, help = 'Run the code for 2 classes' )
+    parser.add_argument('-run_2_labels', action='store_true', default=False, help = 'Run the GDB classifier for 2 labels - Related and Unrelated' )
     params = parser.parse_args()
 
     if not params.clean_cache:

@@ -23,7 +23,7 @@ def generate_features(stances,dataset,name):
     h, b, y = [],[],[]
 
     for stance in stances:
-        if params.run_2_class:
+        if params.run_2_labels:
             if name != 'competition': y.append(LABELS_RELATED.index(stance['Stance']))
             else : y.append(LABELS.index(stance['Stance']))
         else :
@@ -94,7 +94,7 @@ if __name__ == "__main__":
             clf = GradientBoostingClassifier(n_estimators=200, random_state=14128, verbose=True)
             clf.fit(X_train, y_train)
 
-            if params.run_2_class:
+            if params.run_2_labels:
                 predicted = [LABELS_RELATED[int(a)] for a in clf.predict(X_test)]
                 actual = [LABELS_RELATED[int(a)] for a in y_test]
 
@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
     best_fold = pickle.load(open(params.gb_weights_file, 'rb'))
     # Run on Holdout set and report the final score on the holdout set
-    if params.run_2_class:
+    if params.run_2_labels:
         predicted = [LABELS_RELATED[int(a)] for a in best_fold.predict(X_holdout)]
         actual = [LABELS_RELATED[int(a)] for a in y_holdout]
     else :
@@ -131,7 +131,7 @@ if __name__ == "__main__":
 
     #Run on competition dataset
     predicted_combined = []
-    if params.run_2_class:
+    if params.run_2_labels:
         predicted = [LABELS_RELATED[int(a)] for a in best_fold.predict(X_competition)]
     else :
         predicted = [LABELS[int(a)] for a in best_fold.predict(X_competition)]

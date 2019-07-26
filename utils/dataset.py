@@ -17,7 +17,7 @@ class DataSet():
         #make the body ID an integer value
         for s in self.stances:
             s['Body ID'] = int(s['Body ID'])
-            if params.run_2_class and s['Stance'] != 'unrelated' and name != 'competition_test': s['Stance'] = 'related'
+            if params.run_2_labels and s['Stance'] != 'unrelated' and name != 'competition_test': s['Stance'] = 'related'
 
         #copy all bodies into a dictionary
         for article in articles:
