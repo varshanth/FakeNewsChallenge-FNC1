@@ -104,7 +104,7 @@ python train_or_test_dl_model.py -test -condition disagree -weights_file benchma
 <img src="https://github.com/varshanth/FakeNewsChallenge-FNC1/blob/conditioned_cnn_experimental/figures/features.png"><br><br>
 </div>
 
-## Experiments
+## Visualizations
 
 * No Conditioning (λ= 0) Visualizations
 <div align="center">
@@ -124,4 +124,9 @@ python train_or_test_dl_model.py -test -condition disagree -weights_file benchma
 * Misclassified Data Points for Light Conditioning (λ= 2) on “Discuss” Visualizations
 <div align="center">
 <img src="https://github.com/varshanth/FakeNewsChallenge-FNC1/blob/conditioned_cnn_experimental/figures/discsuss_errors.png"><br><br>
+</div>
+
+## Results
+<div align="center">
+<img src="https://github.com/varshanth/FakeNewsChallenge-FNC1/blob/conditioned_cnn_experimental/figures/ablation_study.png"><br><br>
 </div>
