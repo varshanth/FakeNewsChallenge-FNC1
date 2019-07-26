@@ -1,5 +1,5 @@
-#<img src="https://github.com/varshanth/FakeNewsChallenge-FNC1/raw/conditioned_cnn_experimental/figures/ourlogo_withoutsig.png" alt="Penrose Bros logo" style="max-width:20%; float: left;
-  margin: 5px 15px 0 0;"> Granularity-Based Prediction Framework with Stance Conditioned CNN for Fake News Classification - Stance Detection
+# Granularity-Based Prediction Framework with Stance Conditioned CNN for Fake News Classification - Stance Detection <img align="left" width="100" height="100" src="https://github.com/varshanth/FakeNewsChallenge-FNC1/raw/conditioned_cnn_experimental/figures/ourlogo_withoutsig.png" alt="Penrose Bros logo">
+
 Stance detection describes the task of predicting the relative perspective of two pieces of text based on an issue or claim. Stance detection between the headline \& body of a news article was the first stage in the Fake News Challenge issued in June 2017. In this paper, we elaborate on a novel granularity-based framework for stance detection. Apart from the FNC-1 Baseline features, we extract \& use additional intuitive textual features to assist our stance classifier. We also introduce a stance conditioned variant of the traditional Convolutional Neural Network used for NLP tasks in our framework.
 
 Link to the baseline implementation: [Baseline FNC implementation](https://github.com/FakeNewsChallenge/fnc-1-baseline)
