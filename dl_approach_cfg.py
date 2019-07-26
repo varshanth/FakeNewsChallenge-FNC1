@@ -22,6 +22,7 @@ TRAIN_CFG = {
          'LR' : 0.001,
          'LR_DECAY_STEPS' : 10,
          'LR_DECAY_GAMMA' : 0.1,
+         'COND_AGGRESSION_LAMBDA' : 2,
          }
 
 DATA_CFG = {

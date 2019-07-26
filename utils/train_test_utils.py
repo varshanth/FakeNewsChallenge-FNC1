@@ -23,7 +23,7 @@ def categorical_accuracy(preds, y):
     return correct.sum() / torch.FloatTensor([y.shape[0]])
 
 
-def run_epoch(model, train_iter, criteria, optimizer):
+def run_epoch(model, train_iter, criteria, cond_agg_lambda, optimizer):
     epoch_class_loss = 0
     epoch_cosine_loss = 0
     epoch_acc = 0
@@ -33,10 +33,11 @@ def run_epoch(model, train_iter, criteria, optimizer):
         predictions, h_vec, b_vec = model(batch.headline, batch.body)
 
         classif_loss = criteria['classif'](predictions, batch.label)
-        # Multiplier of 2 is chosen to amplify the alignment loss
+        # Conditioning Aggression Lambda:
+        # Multiplier is chosen to amplify the alignment loss
         # This is because the model tries to minimize the classification loss
         # since it is a low hanging fruit
-        condition_field_alignment_loss = 2 * criteria['condition_field_align'](
+        condition_field_alignment_loss = cond_agg_lambda * criteria['condition_field_align'](
                 h_vec, b_vec, batch.condition)
         total_loss =  classif_loss + condition_field_alignment_loss
         acc = categorical_accuracy(predictions, batch.label)
@@ -53,7 +54,7 @@ def run_epoch(model, train_iter, criteria, optimizer):
             epoch_acc / len(train_iter)
 
 
-def evaluate(model, iterator, criteria):
+def evaluate(model, iterator, criteria, cond_agg_lambda):
     epoch_loss = 0
     epoch_acc = 0
     model.eval()
@@ -61,8 +62,8 @@ def evaluate(model, iterator, criteria):
         for batch in iterator:
             predictions, h_vec, b_vec = model(batch.headline, batch.body)
             classif_loss = criteria['classif'](predictions, batch.label)
-            condition_field_alignment_loss = 2 * criteria['condition_field_align'](
-                    h_vec, b_vec, batch.condition)
+            condition_field_alignment_loss = cond_agg_lambda * criteria[
+                    'condition_field_align'](h_vec, b_vec, batch.condition)
             total_loss = classif_loss + condition_field_alignment_loss
             acc = categorical_accuracy(predictions, batch.label)
 
@@ -73,6 +74,7 @@ def evaluate(model, iterator, criteria):
 
 
 def train_model(model, train_iter, val_iter, device, train_cfg):
+    print(f'Conditioning Aggression Lambda: {train_cfg["COND_AGGRESSION_LAMBDA"]}')
     optimizer = optim.Adam(model.parameters(), lr = train_cfg['LR'])
     es = EarlyStoppingWithSaveWeights(
             model,
@@ -97,8 +99,10 @@ def train_model(model, train_iter, val_iter, device, train_cfg):
         start_time = time.time()
         print(f'Epoch {epoch+1}')
         train_class_loss, train_cosine_loss, train_acc = run_epoch(
-                model, train_iter, criteria, optimizer)
-        val_loss, val_acc = evaluate(model, val_iter, criteria)
+                model, train_iter, criteria,
+                train_cfg['COND_AGGRESSION_LAMBDA'], optimizer)
+        val_loss, val_acc = evaluate(model, val_iter, criteria,
+                train_cfg['COND_AGGRESSION_LAMBDA'])
         end_time = time.time()
         lr_scheduler.step()
         ep_m, ep_s = epoch_time(start_time, end_time)
@@ -111,7 +115,7 @@ def train_model(model, train_iter, val_iter, device, train_cfg):
             break
 
 
-def test_model(model, test_iter, device):
+def test_model(model, test_iter, device, train_cfg):
     classif_criterion = nn.CrossEntropyLoss()
     condition_field_align_criterion = nn.CosineEmbeddingLoss()
 
@@ -122,7 +126,8 @@ def test_model(model, test_iter, device):
             'classif' : classif_criterion,
             'condition_field_align' : condition_field_align_criterion,
             }
-    test_loss, test_acc = evaluate(model, test_iter, criteria)
+    test_loss, test_acc = evaluate(model, test_iter, criteria,
+            train_cfg['COND_AGGRESSION_LAMBDA'])
     return test_loss, test_acc
 
 

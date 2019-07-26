@@ -46,7 +46,7 @@ def test_fnc1_model(weights_file, condition, apply_pos_filter, device):
     print('Testing Model Selected')
     model.load_state_dict(torch.load(weights_file))
     model.to(device)
-    test_loss, test_acc = test_model(model, test_iter, device)
+    test_loss, test_acc = test_model(model, test_iter, device, TRAIN_CFG)
     print(f'Test Loss: {test_loss} Accuracy: {test_acc}')
     report_fnc1_score(model, test_iter, fields['label_field'])
     print('--------------End--------------')

@@ -34,12 +34,12 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-### Run
+### Run Pretrained Framework
 ```
-python fnc_kfold.py -dl_weights_file benchmark_model_chkpts/cond_cnn_classif_disagree_light_3_BEST.pth -gb_weights_file model_chkpts/gb_weights_Q_pos_posSS_tfidf_tfidfSSMax_CCNN_bpe_2class.sav -run_2_labels
+python fnc_kfold.py -dl_weights_file benchmark_model_chkpts/cond_cnn_classif_disagree_light_3_BEST.pth -gb_weights_file model_chkpts/gb_weights_Q_pos_posSS_tfidf_tfidfSSMax_CCNN_bpe_2class.sav -run_2_class
 ```
 
-### Arguments
+#### Arguments
 ```
   -h, --help            show this help message and exit
   -c, --clean-cache     clean cache files
@@ -52,6 +52,38 @@ python fnc_kfold.py -dl_weights_file benchmark_model_chkpts/cond_cnn_classif_dis
                         Unrelated
 ```
 
+### Train or Test Only Stance Conditioned CNN
+The model configuration can be found in dl_approach_cfg.py
+
+```
+python train_or_test_dl_model.py --help  
+usage: train_or_test_dl_model.py [-h] [-test] [-weights_file WEIGHTS_FILE]  
+                                 [-condition CONDITION] [-apply_pos_filter]  
+  
+CNN Based FNC Classifier  
+
+optional arguments:  
+  -h, --help            show this help message and exit  
+  -test                 Activate Testing  
+  -weights_file WEIGHTS_FILE  
+                        Path to Weights File  
+  -condition CONDITION  Label to Condition Network  
+  -apply_pos_filter     Apply POS filters  
+```
+
+Condition can be one of {unrelated, agree, disagree, discuss}.  
+If unrelated condition is chosen, the full dataset will be used for training.  
+If other condition is used, all unrelated datapoints will NOT be considered.  
+  
+Example Usage for Training:
+```
+python train_or_test_dl_model.py -condition disagree  
+```
+
+Example Usage for Testing:  
+```
+python train_or_test_dl_model.py -test -condition disagree -weights_file benchmark_model_chkpts/cond_cnn_classif_disagree_light_3_BEST.pth  
+```
 
 ## Model Architecture
 <div align="center">

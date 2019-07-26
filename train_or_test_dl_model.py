@@ -76,7 +76,7 @@ if __name__ == '__main__':
     else:
         print('Testing Model Selected')
         model.load_state_dict(torch.load(args.weights_file))
-        test_loss, test_acc = test_model(model, test_iter, DEVICE)
+        test_loss, test_acc = test_model(model, test_iter, DEVICE, TRAIN_CFG)
         print(f'Test Loss: {test_loss} Accuracy: {test_acc}')
         report_fnc1_score(model, test_iter, fields['label_field'])
 
